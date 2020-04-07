@@ -19,5 +19,14 @@
       "matches": ["*://*.codeforces.com/contest/*/standings*"],
       "js": ["content.js"]
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "testid@testdomain.com"
+    }
+  }
 }

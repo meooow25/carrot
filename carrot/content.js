@@ -105,6 +105,9 @@ async function predict() {
       case 'UNRATED_CONTEST':
         console.info('Possibly unrated contest, not displaying delta column.');
         break;
+      case 'DISABLED':
+        console.info('Deltas for this contest are disabled according to user settings.');
+        break;
       default:
         console.error('Error when predicting deltas: ' + err);
     }
