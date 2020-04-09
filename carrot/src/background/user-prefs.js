@@ -1,4 +1,4 @@
-import * as settings from './settings.js';
+import * as settings from '../common/settings.js';
 
 class UserPrefs {
   constructor(enablePredictDeltas, enableFinalDeltas) {

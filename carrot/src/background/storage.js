@@ -1,4 +1,4 @@
-import { LOCAL } from './storage-wrapper.js';
+import { LOCAL } from '../common/storage-wrapper.js';
 
 const LAST_RATING_FETCH_MILLIS = 'lastRatingFetchMilis';
 const RATINGS = 'ratings';
