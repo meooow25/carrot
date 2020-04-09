@@ -19,8 +19,8 @@ function main() {
   browser.runtime.onMessage.addListener(listener);
 }
 
-function listener(message) {
-  return getDeltas(message.contestId);
+async function listener(message) {
+  return await getDeltas(message.contestId);
 }
 
 function checkRatedByName(contestName) {
@@ -89,7 +89,7 @@ async function getDeltas(contestId) {
     }
   }
   prefs.checkEnabledForRunning();
-  return getDeltasForRunning(contest, rows);
+  return await getDeltasForRunning(contest, rows);
 }
 
 async function getDeltasForFinished(contestId) {
@@ -138,7 +138,7 @@ async function getUpdatedRatings(startTimeSec) {
     }
     await store.setRatings(ratingMap, Date.now());
   }
-  return store.getRatings();
+  return await store.getRatings();
 }
 
 main();
