@@ -1,30 +1,30 @@
 import * as settings from './settings.js';
 
 class UserPrefs {
-  constructor(enabledForRunning, enabledForFinished) {
-    this.enabledForRunning = enabledForRunning;
-    this.enabledForFinished = enabledForFinished;
+  constructor(enablePredictDeltas, enableFinalDeltas) {
+    this.enablePredictDeltas = enablePredictDeltas;
+    this.enableFinalDeltas = enableFinalDeltas;
   }
 
   static async create() {
     return new UserPrefs(
-      await settings.showDeltasForRunning(), await settings.showDeltasForFinished());
+      await settings.enablePredictDeltas(), await settings.enableFinalDeltas());
   }
 
-  checkEnabledForRunning() {
-    if (!this.enabledForRunning) {
+  checkPredictDeltasEnabled() {
+    if (!this.enablePredictDeltas) {
       throw new Error('DISABLED');
     }
   }
 
-  checkEnabledForFinished() {
-    if (!this.enabledForFinished) {
+  checkFinalDeltasEnabled() {
+    if (!this.enableFinalDeltas) {
       throw new Error('DISABLED');
     }
   }
 
-  checkEnabledForAny() {
-    if (!this.enabledForRunning && !this.enabledForFinished) {
+  checkAnyEnabled() {
+    if (!this.enablePredictDeltas && !this.enableFinalDeltas) {
       throw new Error('DISABLED');
     }
   }

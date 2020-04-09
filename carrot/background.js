@@ -44,12 +44,12 @@ function isOldContest(contest) {
 
 async function getDeltas(contestId) {
   const prefs = await UserPrefs.create();
-  prefs.checkEnabledForAny();
+  prefs.checkAnyEnabled();
 
   // If rating changes are cached, return them.
   if (RATING_CHANGES.hasCached(contestId)) {
-    prefs.checkEnabledForFinished();
-    return await getDeltasForFinished(contestId);
+    prefs.checkFinalDeltasEnabled();
+    return await getFinalDeltas(contestId);
   }
 
   // If the contest is old, get rating changes and don't try to predict.
@@ -57,8 +57,8 @@ async function getDeltas(contestId) {
     const contest = CONTESTS.get(contestId);
     checkRatedByName(contest.name);
     if (isOldContest(contest)) {
-      prefs.checkEnabledForFinished();
-      return await getDeltasForFinished(contestId);
+      prefs.checkFinalDeltasEnabled();
+      return await getFinalDeltas(contestId);
     }
   }
 
@@ -77,8 +77,8 @@ async function getDeltas(contestId) {
 
   if (contest.phase == 'FINISHED') {
     try {
-      const deltas = await getDeltasForFinished(contestId);
-      prefs.checkEnabledForFinished();
+      const deltas = await getFinalDeltas(contestId);
+      prefs.checkFinalDeltasEnabled();
       return deltas;
     } catch (er) {
       if (er.message == 'UNRATED_CONTEST') {
@@ -88,11 +88,11 @@ async function getDeltas(contestId) {
       }
     }
   }
-  prefs.checkEnabledForRunning();
-  return await getDeltasForRunning(contest, rows);
+  prefs.checkPredictDeltasEnabled();
+  return await getPredictedDeltas(contest, rows);
 }
 
-async function getDeltasForFinished(contestId) {
+async function getFinalDeltas(contestId) {
   try {
     const ratingChanges = await RATING_CHANGES.fetch(contestId);
     if (ratingChanges && ratingChanges.length) {
@@ -112,7 +112,7 @@ function getRating(ratingMap, handle) {
   return ratingMap[handle] != null ? ratingMap[handle] : DEFAULT_RATING;
 }
 
-async function getDeltasForRunning(contest, rows) {
+async function getPredictedDeltas(contest, rows) {
   const ratingMap = await getUpdatedRatings(contest.startTimeSeconds);
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
