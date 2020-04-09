@@ -21,6 +21,10 @@ async function apiFetch(path, queryParams) {
 }
 
 const contest = {};
+contest.list = async function(gym) {
+  return await apiFetch('contest.list', { gym: gym });
+}
+
 contest.standings = async function(contestId, from, count, handles, room, showUnofficial) {
   return await apiFetch('contest.standings', {
     contestId: contestId,
