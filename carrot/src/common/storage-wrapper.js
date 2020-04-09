@@ -9,8 +9,8 @@ class StorageWrapper {
     return value != null ? value : defaultValue;
   }
 
-  set(key, value) {
-    return browser.storage[this.storageName].set({ [key]: value });
+  async set(key, value) {
+    return await browser.storage[this.storageName].set({ [key]: value });
   }
 }
 

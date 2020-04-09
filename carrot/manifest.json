@@ -12,17 +12,17 @@
     "storage"
   ],
   "background": {
-    "page": "background.html",
+    "page": "src/background/background.html",
     "persistent": true
   },
   "content_scripts": [
     {
       "matches": ["*://*.codeforces.com/contest/*/standings*"],
-      "js": ["content.js"]
+      "js": ["src/content/content.js"]
     }
   ],
   "options_ui": {
-    "page": "options.html",
+    "page": "src/options/options.html",
     "browser_style": true
   },
   "browser_specific_settings": {
