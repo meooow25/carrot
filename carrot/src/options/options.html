@@ -7,11 +7,31 @@
     <ul style="list-style-type:none;">
       <li>
         <input type="checkbox" id="enable-predict-deltas">
-        <label for="enable-predict-deltas">Predict and show deltas for running contests and recently finished contests</label>
+        <label for="enable-predict-deltas">
+          Predict and show deltas for running contests and recently finished contests
+        </label>
+        <ul style="list-style-type: none; margin-top: 2px; padding-left: 25px;">
+          <li>
+            <details>
+              <summary style="cursor: pointer;">
+                TL;DR: Disable this if you are on a data capped network
+              </summary>
+              If you are on Codeforces and a contest starts in less than an hour, having this
+              option enabled will prefetch user ratings (around 14MB of data) which is required for
+              delta prediction. This is a one-time fetch for the contest. Disabling this will fetch
+              the ratings when you open the ranklist for the first time. It is recommended to keep
+              this enabled unless your network has a low data cap.
+            </details>
+            <input type="checkbox" id="enable-prefetch-ratings">
+            <label for="enable-prefetch-ratings">Prefetch ratings</label>
+          </li>
+        </ul>
       </li>
       <li>
         <input type="checkbox" id="enable-final-deltas">
-        <label for="enable-final-deltas">Show final deltas for finished rated contests</label>
+        <label for="enable-final-deltas">
+          Show final deltas for finished rated contests
+        </label>
       </li>
     </ul>
     <script type="module" src="options.js"></script>

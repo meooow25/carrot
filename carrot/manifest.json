@@ -17,7 +17,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.codeforces.com/contest/*/standings*"],
+      "matches": ["*://*.codeforces.com/*"],
       "js": ["src/content/content.js"]
     }
   ],

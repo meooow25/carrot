@@ -24,6 +24,10 @@ class Contests {
     setTimeout(this.refresh, REFRESH_INTERVAL);
   }
 
+  list() {
+    return Object.values(this.contestMap);
+  }
+
   hasCached(contestId) {
     return contestId in this.contestMap;
   }

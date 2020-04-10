@@ -20,11 +20,15 @@ class RatingChanges {
     }
     try {
       const ratingChanges = await this.api.contest.ratingChanges(contestId);
-      this.contestIds.push(contestId);
-      this.ratingChangesMap[contestId] = ratingChanges;
-      if (this.contestIds.length > MAX_CONTESTS) {
-        delete this.ratingChangesMap[this.contestIds[0]];
-        this.contestIds.shift();
+      // Rating changes are empty for some unrated contests or contests in hack phase.
+      // Ideally there would be a specific error response.
+      if (ratingChanges.length) {
+        this.contestIds.push(contestId);
+        this.ratingChangesMap[contestId] = ratingChanges;
+        if (this.contestIds.length > MAX_CONTESTS) {
+          delete this.ratingChangesMap[this.contestIds[0]];
+          this.contestIds.shift();
+        }
       }
       return ratingChanges;
     } catch (er) {
