@@ -1,0 +1,38 @@
+body {
+    min-width: 200px;
+    background-color:#fffaf7;
+}
+
+.main {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+}
+
+.text {
+    font-weight: bold;
+    font-style: italic;
+    color: #e46d21;
+}
+
+#icon {
+    width: 32px;
+}
+
+#title {
+    font-size: 18px;
+    font-family: Georgia, serif;
+    margin-left: 8px;
+}
+
+#version {
+    font-size: 10px;
+    font-family: sans-serif;
+    align-self: flex-end;
+    margin-bottom: 9px;
+}
+
+#settings {
+    margin-left: auto;
+    cursor: pointer;
+}

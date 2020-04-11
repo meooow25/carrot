@@ -4,9 +4,9 @@
   "version": "0.1",
   "description": "Rating predictor for Codeforces",
   "icons": {
-    "48": "icons/icon48.png",
-    "96": "icons/icon96.png",
-    "128": "icons/icon128.png"
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg",
+    "128": "icons/icon.svg"
   },
   "permissions": [
     "storage"
@@ -24,6 +24,12 @@
   "options_ui": {
     "page": "src/options/options.html",
     "browser_style": true
+  },
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": "icons/icon.svg",
+    "default_title": "Carrot",
+    "default_popup": "src/popup/popup.html"
   },
   "browser_specific_settings": {
     "gecko": {
