@@ -1,31 +1,46 @@
 import * as api from '../common/cf-api.js';
-import * as store from './storage.js';
+import * as settings from '../common/settings.js';
 import { Contestant, predict } from './predict.js';
 import { Contests } from './contests.js';
 import { RatingChanges } from './rating-changes.js';
+import { Ratings } from './ratings.js';
+import { TopLevelCache } from './top-level-cache.js';
 import { UserPrefs } from './user-prefs.js';
+import { LOCAL } from '../common/storage-wrapper.js';
 
 const DEFAULT_RATING = 1500;
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
 const RATING_PENDING_MAX_DAYS = 3;
 
-let CONTESTS;
-let RATING_CHANGES;
+const CONTESTS = new Contests(api);
+const RATING_CHANGES = new RatingChanges(api);
+const RATINGS = new Ratings(api, LOCAL);
+const TOP_LEVEL_CACHE = new TopLevelCache();
 
-function main() {
-  CONTESTS = new Contests(api);
-  RATING_CHANGES = new RatingChanges(api);
-  browser.runtime.onMessage.addListener(listener);
-}
+browser.runtime.onMessage.addListener(listener);
 
 async function listener(message) {
-  return await getDeltas(message.contestId);
+  switch (message.type) {
+    case 'PREDICT':
+      return await getDeltas(message.contestId);
+    case 'PING':
+      await maybeUpdateRatings();
+      return;
+    default:
+      throw new Error('Unknown message type');
+  }
+}
+
+// Prediction related code starts.
+
+function isUnratedByName(contestName) {
+  const lower = contestName.toLowerCase();
+   return UNRATED_HINTS.some(hint => lower.includes(hint));
 }
 
 function checkRatedByName(contestName) {
-  const lower = contestName.toLowerCase();
-  if (UNRATED_HINTS.some(hint => lower.includes(hint))) {
+  if (isUnratedByName(contestName)) {
     throw new Error('UNRATED_CONTEST');
   }
 }
@@ -43,8 +58,16 @@ function isOldContest(contest) {
 }
 
 async function getDeltas(contestId) {
-  const prefs = await UserPrefs.create();
-  prefs.checkAnyEnabled();
+  if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
+    const deltasPromise = calcDeltas(contestId);
+    TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
+  }
+  return await TOP_LEVEL_CACHE.get(contestId);
+}
+
+async function calcDeltas(contestId) {
+  const prefs = await UserPrefs.create(settings);
+  prefs.checkAnyDeltasEnabled();
 
   // If rating changes are cached, return them.
   if (RATING_CHANGES.hasCached(contestId)) {
@@ -104,8 +127,8 @@ async function getFinalDeltas(contestId) {
     }
   } catch (er) {
     console.error('Error fetching deltas: ' + er);
-    throw new Error('UNRATED_CONTEST');
   }
+  throw new Error('UNRATED_CONTEST');
 }
 
 function getRating(ratingMap, handle) {
@@ -113,7 +136,7 @@ function getRating(ratingMap, handle) {
 }
 
 async function getPredictedDeltas(contest, rows) {
-  const ratingMap = await getUpdatedRatings(contest.startTimeSeconds);
+  const ratingMap = await RATINGS.fetchCurrentRatings(contest.startTimeSeconds * 1000);
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
     // For educational rounds, standings include contestants who are unrated.
@@ -128,17 +151,34 @@ async function getPredictedDeltas(contest, rows) {
   return { deltas: deltas, type: 'PREDICTED' };
 }
 
-async function getUpdatedRatings(startTimeSec) {
-  // Forced to use user.ratedList because user.info does not work with a huge list of handles.
-  if (!(await store.isCacheFresh(startTimeSec * 1000))) {
-    const users = await api.user.ratedList(false);
-    const ratingMap = {};
-    for (const user of users) {
-      ratingMap[user.handle] = user.rating;
+// Prediction related code ends.
+
+// Rating prefetch related code starts.
+
+function getNearestUpcomingRatedContestStartTime() {
+  let nearest = null;
+  const now = Date.now();
+  for (const c of CONTESTS.list()) {
+    const start = (c.startTimeSeconds || 0) * 1000;
+    if (start < now || isUnratedByName(c.name)) {
+      continue;
     }
-    await store.setRatings(ratingMap, Date.now());
+    if (nearest == null || start < nearest) {
+      nearest = start;
+    }
   }
-  return await store.getRatings();
+  return nearest;
 }
 
-main();
+async function maybeUpdateRatings() {
+  const prefs = await UserPrefs.create(settings);
+  if (!prefs.enablePredictDeltas || !prefs.enablePrefetchRatings) {
+    return;
+  }
+  const startTimeMs = getNearestUpcomingRatedContestStartTime();
+  if (startTimeMs != null) {
+    await RATINGS.maybeRefreshCache(startTimeMs);
+  }
+}
+
+// Rating prefetch related code ends.

@@ -2,12 +2,32 @@ import * as settings from '../common/settings.js';
 
 async function setup() {
   const predict = document.querySelector('#enable-predict-deltas');
-  predict.checked = await settings.enablePredictDeltas();
-  predict.addEventListener('input', () => settings.enablePredictDeltas(predict.checked));
-
   const final = document.querySelector('#enable-final-deltas');
-  final.checked = await settings.enableFinalDeltas();
-  final.addEventListener('input', () => settings.enableFinalDeltas(final.checked));
+  const prefetch = document.querySelector('#enable-prefetch-ratings');
+
+  async function update() {
+    predict.checked = await settings.enablePredictDeltas();
+    final.checked = await settings.enableFinalDeltas();
+    prefetch.checked = await settings.enablePrefetchRatings();
+    prefetch.disabled = !predict.checked;
+  }
+
+  predict.addEventListener('input', async () => {
+    await settings.enablePredictDeltas(predict.checked);
+    await update();
+  });
+
+  final.addEventListener('input', async () => {
+    await settings.enableFinalDeltas(final.checked);
+    await update();
+  });
+
+  prefetch.addEventListener('input', async () => {
+    await settings.enablePrefetchRatings(prefetch.checked);
+    await update();
+  });
+
+  await update();
 }
 
 document.addEventListener('DOMContentLoaded', setup);

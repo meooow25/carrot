@@ -2,19 +2,19 @@ import { SYNC } from './storage-wrapper.js';
 
 const ENABLE_PREDICT_DELTAS = 'settings.enablePredictDeltas';
 const ENABLE_FINAL_DELTAS = 'settings.enableFetchDeltas';
+const ENABLE_PREFETCH_RATINGS = 'settings.enablePrefetchRatings';
 
-async function enablePredictDeltas(value) {
-  if (value == null) {
-    return await SYNC.get(ENABLE_PREDICT_DELTAS, true);
-  }
-  return await SYNC.set(ENABLE_PREDICT_DELTAS, !!value);
+function boolSetterGetter(key, defaultValue) {
+  return async (value) => {
+    if (value == null) {
+      return await SYNC.get(key, !!defaultValue);
+    }
+    return await SYNC.set(key, !!value);
+  };
 }
 
-async function enableFinalDeltas(value) {
-  if (value == null) {
-    return await SYNC.get(ENABLE_FINAL_DELTAS, true);
-  }
-  return await SYNC.set(ENABLE_FINAL_DELTAS, !!value);
-}
+const enablePredictDeltas = boolSetterGetter(ENABLE_PREDICT_DELTAS, true);
+const enableFinalDeltas = boolSetterGetter(ENABLE_FINAL_DELTAS, true);
+const enablePrefetchRatings = boolSetterGetter(ENABLE_PREFETCH_RATINGS, true);
 
-export { enablePredictDeltas, enableFinalDeltas };
+export { enablePredictDeltas, enableFinalDeltas, enablePrefetchRatings };

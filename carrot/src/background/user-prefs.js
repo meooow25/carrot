@@ -1,14 +1,15 @@
-import * as settings from '../common/settings.js';
-
 class UserPrefs {
-  constructor(enablePredictDeltas, enableFinalDeltas) {
+  constructor(enablePredictDeltas, enableFinalDeltas, enablePrefetchRatings) {
     this.enablePredictDeltas = enablePredictDeltas;
     this.enableFinalDeltas = enableFinalDeltas;
+    this.enablePrefetchRatings = enablePrefetchRatings;
   }
 
-  static async create() {
+  static async create(settings) {
     return new UserPrefs(
-      await settings.enablePredictDeltas(), await settings.enableFinalDeltas());
+      await settings.enablePredictDeltas(),
+      await settings.enableFinalDeltas(),
+      await settings.enablePrefetchRatings());
   }
 
   checkPredictDeltasEnabled() {
@@ -23,7 +24,7 @@ class UserPrefs {
     }
   }
 
-  checkAnyEnabled() {
+  checkAnyDeltasEnabled() {
     if (!this.enablePredictDeltas && !this.enableFinalDeltas) {
       throw new Error('DISABLED');
     }

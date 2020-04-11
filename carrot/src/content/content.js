@@ -1,5 +1,4 @@
-const CONTEST_ID = location.pathname.match(/contest\/(\d+)\/standings/)[1];
-
+const PING_INTERVAL = 3 * 60 * 1000;  // 3 minutes
 const GREEK_CAPITAL_DELTA = '\u0394';
 const DELTA_SPAN_CLASS = 'delta-span';
 
@@ -85,9 +84,9 @@ function showTimer() {
   setInterval(update, 1000);
 }
 
-async function predict() {
+async function predict(contestId) {
   try {
-    const resp = await browser.runtime.sendMessage({ contestId: CONTEST_ID });
+    const resp = await browser.runtime.sendMessage({ type: 'PREDICT', contestId: contestId });
     setupDeltaColumn();
     updateStandings(resp.deltas);
     switch (resp.type) {
@@ -115,9 +114,17 @@ async function predict() {
 }
 
 function main() {
-  if (document.querySelector('table.standings')) {
-    predict();
+  // On any Codeforces ranklist page.
+  const matches = location.pathname.match(/contest\/(\d+)\/standings/);
+  const contestId = matches ? matches[1] : null;
+  if (contestId && document.querySelector('table.standings')) {
+    predict(contestId);
   }
+
+  // On any Codeforces page.
+  const ping = () => { browser.runtime.sendMessage({ type: 'PING' }); };
+  ping();
+  setInterval(ping, PING_INTERVAL);
 }
 
 main();
