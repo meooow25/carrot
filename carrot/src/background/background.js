@@ -4,6 +4,7 @@ import { Contestant, predict } from './predict.js';
 import { Contests } from './contests.js';
 import { RatingChanges } from './rating-changes.js';
 import { Ratings } from './ratings.js';
+import { TopLevelCache } from './top-level-cache.js';
 import { UserPrefs } from './user-prefs.js';
 import { LOCAL } from '../common/storage-wrapper.js';
 
@@ -12,16 +13,12 @@ const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
 const RATING_PENDING_MAX_DAYS = 3;
 
-let CONTESTS;
-let RATING_CHANGES;
-let RATINGS;
+const CONTESTS = new Contests(api);
+const RATING_CHANGES = new RatingChanges(api);
+const RATINGS = new Ratings(api, LOCAL);
+const TOP_LEVEL_CACHE = new TopLevelCache();
 
-function main() {
-  CONTESTS = new Contests(api);
-  RATING_CHANGES = new RatingChanges(api);
-  RATINGS = new Ratings(api, LOCAL);
-  browser.runtime.onMessage.addListener(listener);
-}
+browser.runtime.onMessage.addListener(listener);
 
 async function listener(message) {
   switch (message.type) {
@@ -61,6 +58,14 @@ function isOldContest(contest) {
 }
 
 async function getDeltas(contestId) {
+  if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
+    const deltasPromise = calcDeltas(contestId);
+    TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
+  }
+  return await TOP_LEVEL_CACHE.get(contestId);
+}
+
+async function calcDeltas(contestId) {
   const prefs = await UserPrefs.create(settings);
   prefs.checkAnyDeltasEnabled();
 
@@ -177,5 +182,3 @@ async function maybeUpdateRatings() {
 }
 
 // Rating prefetch related code ends.
-
-main();
