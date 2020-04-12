@@ -1,3 +1,5 @@
+import { Lock } from './lock.js';
+
 const PREFETCH_INTERVAL = 60 * 60 * 1000;  // 1 hour
 
 const RATINGS_TIMESTAMP = 'cache.ratings.timestamp';
@@ -14,19 +16,29 @@ class Ratings {
   constructor(api, storage) {
     this.api = api;
     this.storage = storage;
+    this.lock = new Lock();
   }
 
   async maybeRefreshCache(contestStartMs) {
-    const timeLeft = contestStartMs - Date.now();
-    if (timeLeft > PREFETCH_INTERVAL) {
-      return;
-    }
-    const timeLeftAfterLastFetch =
-      contestStartMs - (await this.storage.get(RATINGS_TIMESTAMP, 0));
-    if (timeLeftAfterLastFetch > PREFETCH_INTERVAL) {
-      // Last fetch is too old, update cache.
-      await this.cacheRatings();
-    }
+    const inner = async () => {
+      const timeLeft = contestStartMs - Date.now();
+      if (timeLeft > PREFETCH_INTERVAL) {
+        return;
+      }
+      const timeLeftAfterLastFetch =
+        contestStartMs - (await this.storage.get(RATINGS_TIMESTAMP, 0));
+      if (timeLeftAfterLastFetch > PREFETCH_INTERVAL) {
+        // Last fetch is too old, update cache.
+        await this.cacheRatings();
+      }
+    };
+
+    // This is quite a heavy query, lock to make it impossible to make multiple API calls at once.
+    // Multiple API calls will not happen consecutively either, since the last fetched time should
+    // be recent enough to early exit the function.
+    await this.lock.acquire();
+    await inner();
+    this.lock.release();
   }
 
   async fetchCurrentRatings(contestStartMs) {
