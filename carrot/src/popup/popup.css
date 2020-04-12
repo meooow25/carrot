@@ -1,38 +1,37 @@
 body {
-    min-width: 200px;
-    background-color:#fffaf7;
+  background-color:#fff9f5;
 }
 
 .main {
-    display: flex;
-    align-items: center;
-    padding: 15px;
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
 }
 
 .text {
-    font-weight: bold;
-    font-style: italic;
-    color: #e46d21;
+  font-weight: bold;
+  font-style: italic;
+  color: #e46d21;
 }
 
 #icon {
-    width: 32px;
+  width: 32px;
 }
 
 #title {
-    font-size: 18px;
-    font-family: Georgia, serif;
-    margin-left: 8px;
+  font-size: 18px;
+  font-family: Georgia, serif;
+  margin-left: 8px;
 }
 
 #version {
-    font-size: 10px;
-    font-family: sans-serif;
-    align-self: flex-end;
-    margin-bottom: 9px;
+  font-size: 10px;
+  font-family: sans-serif;
+  align-self: flex-end;
+  margin-bottom: 9px;
 }
 
 #settings {
-    margin-left: auto;
-    cursor: pointer;
+  margin-left: 15px;
+  cursor: pointer;
 }
