@@ -25,6 +25,7 @@ async function listener(message) {
     case 'PREDICT':
       return await getDeltas(message.contestId);
     case 'PING':
+      await maybeUpdateContestList();
       await maybeUpdateRatings();
       return;
     default:
@@ -153,7 +154,15 @@ async function getPredictedDeltas(contest, rows) {
 
 // Prediction related code ends.
 
-// Rating prefetch related code starts.
+// Cache related code starts.
+
+async function maybeUpdateContestList() {
+  const prefs = await UserPrefs.create(settings);
+  if (!prefs.enablePredictDeltas && !prefs.enableFinalDeltas) {
+    return;
+  }
+  await CONTESTS.maybeRefreshCache();
+}
 
 function getNearestUpcomingRatedContestStartTime() {
   let nearest = null;
@@ -181,4 +190,4 @@ async function maybeUpdateRatings() {
   }
 }
 
-// Rating prefetch related code ends.
+// Cache related code ends.
