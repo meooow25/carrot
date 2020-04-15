@@ -14,7 +14,7 @@ It then calculates the rating changes following the algorithm published by Mike 
 Not necessarily. The CF-Predictor extension communicates with a server, while Carrot fetches data and performs all calculations in the browser. So the network usage is significantly lower for CF-Predictor. However, Carrot is 100% accurate and it works in real time.
 
 #### How is Carrot fast enough to calculate rating changes of every contestant in real time?
-FFT.
+FFT. The answer is always FFT.
 
 #### Your code sucks
-Suggestions are most welcome.
+Suggestions and ideas for improvements are most welcome.
