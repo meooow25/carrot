@@ -16,5 +16,8 @@ Not necessarily. The CF-Predictor extension communicates with a server, while Ca
 #### How is Carrot fast enough to calculate rating changes of every contestant in real time?
 FFT. The answer is always FFT.
 
+#### Cool, how do I install it?
+Carrot is available on [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/carrot/).
+
 #### Your code sucks
 Suggestions and ideas for improvements are most welcome.
