@@ -39,9 +39,7 @@ class Contests {
     };
 
     // Not that heavy so simultaneous queries aren't a terrible thing to do, but lock anyway.
-    await this.lock.acquire();
-    await inner();
-    this.lock.release();
+    await this.lock.execute(inner);
   }
 
   list() {
