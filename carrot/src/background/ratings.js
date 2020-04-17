@@ -36,9 +36,7 @@ class Ratings {
     // This is quite a heavy query, lock to make it impossible to make multiple API calls at once.
     // Multiple API calls will not happen consecutively either, since the last fetched time should
     // be recent enough to early exit the function.
-    await this.lock.acquire();
-    await inner();
-    this.lock.release();
+    await this.lock.execute(inner);
   }
 
   async fetchCurrentRatings(contestStartMs) {

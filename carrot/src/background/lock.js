@@ -24,6 +24,15 @@ class Lock {
       resolve();
     }
   }
+
+  async execute(asyncFunc) {
+    await this.acquire();
+    try {
+      return await asyncFunc();
+    } finally {
+      this.release();
+    }
+  }
 }
 
 export { Lock };
