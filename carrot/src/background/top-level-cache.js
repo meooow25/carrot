@@ -6,8 +6,7 @@ const TIMEOUT = 15 * 1000;  // 15 seconds
  * short period of time, the same predictions will be sent to all.
  */
 class TopLevelCache {
-  constructor(timeout) {
-    this.timeout = timeout;
+  constructor() {
     this.map = {};
   }
 
