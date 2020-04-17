@@ -26,8 +26,7 @@ class RatingChanges {
         this.contestIds.push(contestId);
         this.ratingChangesMap[contestId] = ratingChanges;
         if (this.contestIds.length > MAX_CONTESTS) {
-          delete this.ratingChangesMap[this.contestIds[0]];
-          this.contestIds.shift();
+          delete this.ratingChangesMap[this.contestIds.shift()];
         }
       }
       return ratingChanges;
