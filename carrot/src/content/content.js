@@ -25,7 +25,7 @@ function setupDeltaColumn(resp) {
       rankUpColTitle = 'Rating change for rank up';
       break;
     default:
-      console.error('Unknown prediction type ' + resp.type);
+      throw new Error('Unknown prediction type: ' + resp.type);
   }
 
   const rows = Array.from(document.querySelectorAll('table.standings tbody tr'));
@@ -194,7 +194,7 @@ function updateStandings(resp) {
         }
         break;
       default:
-        console.error('Unknown prediction type ' + resp.type);
+        throw new Error('Unknown prediction type: ' + resp.type);
     }
   }
 }
@@ -220,22 +220,11 @@ function showTimer() {
 }
 
 async function predict(contestId) {
+  let resp;
   try {
-    const resp = await browser.runtime.sendMessage({ type: 'PREDICT', contestId: contestId });
-    setupDeltaColumn(resp);
-    updateStandings(resp);
-    switch (resp.type) {
-      case 'FINAL':
-        showFinal();
-        break;
-      case 'PREDICTED':
-        showTimer();
-        break;
-      default:
-        console.error('Unknown prediction type ' + resp.type);
-    }
-  } catch (err) {
-    switch (err.message) {
+    resp = await browser.runtime.sendMessage({ type: 'PREDICT', contestId: contestId });
+  } catch (er) {
+    switch (er.message) {
       case 'UNRATED_CONTEST':
         console.info('Possibly unrated contest, not displaying delta column.');
         break;
@@ -243,8 +232,22 @@ async function predict(contestId) {
         console.info('Deltas for this contest are disabled according to user settings.');
         break;
       default:
-        console.error('Error when predicting deltas: ' + err);
+        throw er;
     }
+    return;
+  }
+
+  setupDeltaColumn(resp);
+  updateStandings(resp);
+  switch (resp.type) {
+    case 'FINAL':
+      showFinal();
+      break;
+    case 'PREDICTED':
+      showTimer();
+      break;
+    default:
+      throw new Error('Unknown prediction type: ' + resp.type);
   }
 }
 
@@ -253,7 +256,8 @@ function main() {
   const matches = location.pathname.match(/contest\/(\d+)\/standings/);
   const contestId = matches ? matches[1] : null;
   if (contestId && document.querySelector('table.standings')) {
-    predict(contestId);
+    predict(contestId)
+      .catch(er => console.error(er));
   }
 
   // On any Codeforces page.

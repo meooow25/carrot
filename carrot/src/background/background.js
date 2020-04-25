@@ -21,15 +21,20 @@ const TOP_LEVEL_CACHE = new TopLevelCache();
 browser.runtime.onMessage.addListener(listener);
 
 async function listener(message) {
-  switch (message.type) {
-    case 'PREDICT':
-      return await getDeltas(message.contestId);
-    case 'PING':
-      await maybeUpdateContestList();
-      await maybeUpdateRatings();
-      return;
-    default:
-      throw new Error('Unknown message type');
+  try {
+    switch (message.type) {
+      case 'PREDICT':
+        return await getDeltas(message.contestId);
+      case 'PING':
+        await maybeUpdateContestList();
+        await maybeUpdateRatings();
+        return;
+      default:
+        throw new Error('Unknown message type');
+    }
+  } catch (er) {
+    console.error(er);
+    throw er;
   }
 }
 
