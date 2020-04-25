@@ -178,19 +178,15 @@ function updateStandings(resp) {
   for (const [idx, tableRow] of rows.entries()) {
     tableRow.querySelector('th:last-child, td:last-child').classList.remove('right');
 
-    let isHeaderOrFooter;
     let deltaCell, rankUpCell;
     if (idx == 0) {
-      isHeaderOrFooter = true;
       deltaCell = makeDeltaHeaderCell(deltaColTitle);
       rankUpCell = makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle);
     } else if (idx == rows.length - 1) {
-      isHeaderOrFooter = true;
       deltaCell = makeDeltaFooterCell();
       rankUpCell = makeDeltaFooterCell();
       rankUpCell.classList.add('bottom', 'right');
     } else {
-      isHeaderOrFooter = false;
       deltaCell = document.createElement('td');
       rankUpCell = document.createElement('td');
       rankUpCell.classList.add('right');
