@@ -1,6 +1,5 @@
 const PING_INTERVAL = 3 * 60 * 1000;  // 3 minutes
-const DELTA_TD_CLASS = 'delta-td';
-const RANK_UP_TD_CLASS = 'rank-up-td';
+const PREDICT_TEXT_ID = 'predict_text';
 
 const Unicode = {
   BLACK_CURVED_RIGHTWARDS_AND_UPWARDS_ARROW: '\u2BAD',
@@ -9,9 +8,156 @@ const Unicode = {
   BACKSLANTED_SOUTH_ARROW_WITH_HORIZONTAL_TAIL: '\u2B5D',
 };
 
-let PREDICT_TEXT;
+function makeGreySpan(text, title) {
+  const span = document.createElement('span');
+  span.style.fontWeight = 'bold';
+  span.style.color = 'lightgrey';
+  span.textContent = text;
+  if (title) {
+    span.title = title;
+  }
+  span.classList.add('small');
+  return span;
+}
 
-function setupDeltaColumn(resp) {
+function makeRankSpan(rank) {
+  const span = document.createElement('span');
+  if (rank.colorClass) {
+    span.classList.add(rank.colorClass);
+  }
+  span.style.verticalAlign = 'middle';
+  span.textContent = rank.abbr;
+  span.title = rank.name;
+  span.style.display = 'inline-block';  // Allows CSS black ::first-letter for LGM.
+  return span;
+}
+
+function makeArrowSpan(arrow) {
+  const span = document.createElement('span');
+  span.classList.add('small');
+  span.style.verticalAlign = 'middle';
+  span.style.paddingLeft = '0.5em';
+  span.style.paddingRight = '0.5em';
+  span.textContent = arrow;
+  return span;
+}
+
+function makeDeltaSpan(delta) {
+  const span = document.createElement('span');
+  span.style.fontWeight = 'bold';
+  span.style.verticalAlign = 'middle';
+  if (delta > 0) {
+    span.style.color = 'green';
+    span.textContent = `+${delta}`;
+  } else {
+    span.style.color = 'gray';
+    span.textContent = delta;
+  }
+  return span;
+}
+
+function makeFinalRankUpSpan(rank, newRank, arrow) {
+  const span = document.createElement('span');
+  span.style.fontWeight = 'bold';
+  span.appendChild(makeRankSpan(rank));
+  span.appendChild(makeArrowSpan(arrow));
+  span.appendChild(makeRankSpan(newRank));
+  return span;
+}
+
+function makePredictedRankUpSpan(rank, deltaReqForRankUp, nextRank) {
+  const span = document.createElement('span');
+  span.style.fontWeight = 'bold';
+
+  if (nextRank == null) {  // LGM
+    span.appendChild(makeRankSpan(rank));
+    return span;
+  }
+
+  span.appendChild(makeDeltaSpan(deltaReqForRankUp));
+  span.appendChild(makeArrowSpan(Unicode.SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL));
+  span.appendChild(makeRankSpan(nextRank));
+  return span;
+}
+
+function makeDeltaHeaderCell(deltaColTitle) {
+  const cell = document.createElement('th');
+  cell.classList.add('top');
+  cell.style.width = '5em';
+  {
+    const span = document.createElement('span');
+    span.textContent = Unicode.GREEK_CAPITAL_DELTA;
+    span.title = deltaColTitle;
+    cell.appendChild(span);
+  }
+  cell.appendChild(document.createElement('br'));
+  {
+    const span = document.createElement('span');
+    span.classList.add('small');
+    span.id = PREDICT_TEXT_ID;
+    cell.appendChild(span);
+  }
+  return cell;
+}
+
+function makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle) {
+  const cell = document.createElement('th');
+  cell.classList.add('top', 'right');
+  cell.style.width = rankUpColWidth;
+  {
+    const span = document.createElement('span');
+    span.textContent = Unicode.BLACK_CURVED_RIGHTWARDS_AND_UPWARDS_ARROW;
+    span.title = rankUpColTitle;
+    cell.appendChild(span);
+  }
+  return cell;
+}
+
+function makeDeltaFooterCell() {
+  const cell = document.createElement('td');
+  cell.classList.add('bottom');
+  return cell;
+}
+
+function makeRankUpFooterCell() {
+  const cell = document.createElement('td');
+  cell.classList.add('bottom', 'right');
+  return cell;
+}
+
+function populateDeltaAndRankUpCells(row, type, greenTint, deltaCell, rankUpCell) {
+  if (row == null) {
+    deltaCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
+    rankUpCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
+    return;
+  }
+
+  deltaCell.appendChild(makeDeltaSpan(row.delta));
+  switch (type) {
+    case 'FINAL':
+      if (row.rank.abbr === row.newRank.abbr) {  // No rank change
+        rankUpCell.appendChild(makeGreySpan('N/C', 'No change'));
+      } else {
+        const arrow =
+          row.delta > 0
+            ? Unicode.SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL
+            : Unicode.BACKSLANTED_SOUTH_ARROW_WITH_HORIZONTAL_TAIL;
+        rankUpCell.appendChild(makeFinalRankUpSpan(row.rank, row.newRank, arrow));
+      }
+      break;
+    case 'PREDICTED':
+      rankUpCell.appendChild(
+        makePredictedRankUpSpan(row.rank, row.deltaReqForRankUp, row.nextRank));
+      if (row.delta >= row.deltaReqForRankUp) {
+        rankUpCell.style.backgroundColor = greenTint;
+      }
+      break;
+    default:
+      throw new Error('Unknown prediction type: ' + type);
+  }
+}
+
+function updateStandings(resp) {
   let deltaColTitle, rankUpColWidth, rankUpColTitle;
   switch (resp.type) {
     case 'FINAL':
@@ -29,45 +175,28 @@ function setupDeltaColumn(resp) {
   }
 
   const rows = Array.from(document.querySelectorAll('table.standings tbody tr'));
-  for (const [idx, row] of rows.entries()) {
-    row.querySelector('th:last-child, td:last-child').classList.remove('right');
+  for (const [idx, tableRow] of rows.entries()) {
+    tableRow.querySelector('th:last-child, td:last-child').classList.remove('right');
+
+    let isHeaderOrFooter;
     let deltaCell, rankUpCell;
     if (idx == 0) {
-      deltaCell = document.createElement('th');
-      deltaCell.classList.add('top');
-      deltaCell.style.width = '5em';
-      {
-        const span = document.createElement('span');
-        span.textContent = Unicode.GREEK_CAPITAL_DELTA;
-        span.title = deltaColTitle;
-        deltaCell.appendChild(span);
-      }
-      deltaCell.appendChild(document.createElement('br'));
-      {
-        const span = document.createElement('span');
-        span.classList.add('small');
-        span.id = 'predict-text';
-        deltaCell.appendChild(span);
-      }
-      rankUpCell = document.createElement('th');
-      rankUpCell.classList.add('top', 'right');
-      rankUpCell.style.width = rankUpColWidth;
-      {
-        const span = document.createElement('span');
-        span.textContent = Unicode.BLACK_CURVED_RIGHTWARDS_AND_UPWARDS_ARROW;
-        span.title = rankUpColTitle;
-        rankUpCell.appendChild(span);
-      }
+      isHeaderOrFooter = true;
+      deltaCell = makeDeltaHeaderCell(deltaColTitle);
+      rankUpCell = makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle);
     } else if (idx == rows.length - 1) {
-      deltaCell = document.createElement('td');
-      deltaCell.classList.add('bottom');
-      rankUpCell = document.createElement('td');
+      isHeaderOrFooter = true;
+      deltaCell = makeDeltaFooterCell();
+      rankUpCell = makeDeltaFooterCell();
       rankUpCell.classList.add('bottom', 'right');
     } else {
+      isHeaderOrFooter = false;
       deltaCell = document.createElement('td');
-      deltaCell.classList.add(DELTA_TD_CLASS);
       rankUpCell = document.createElement('td');
-      rankUpCell.classList.add('right', RANK_UP_TD_CLASS);
+      rankUpCell.classList.add('right');
+      const handle = tableRow.querySelector('td.contestant-cell').textContent.trim();
+      const greenTint = idx % 2 ? '#ebf7eb' : '#f2fff2';
+      populateDeltaAndRankUpCells(resp.rowMap[handle], resp.type, greenTint, deltaCell, rankUpCell);
     }
 
     if (idx % 2) {
@@ -75,139 +204,26 @@ function setupDeltaColumn(resp) {
       rankUpCell.classList.add('dark');
     }
 
-    row.appendChild(deltaCell);
-    row.appendChild(rankUpCell);
-  }
-
-  PREDICT_TEXT = document.querySelector('#predict-text');
-}
-
-function getNaSpan() {
-  const span = document.createElement('span');
-  span.style.fontWeight = 'bold';
-  span.style.color = 'lightgrey';
-  span.textContent = 'N/A';
-  span.classList.add('small');
-  return span;
-}
-
-function getRankSpan(rank) {
-  const span = document.createElement('span');
-  if (rank.colorClass) {
-    span.classList.add(rank.colorClass);
-  }
-  span.style.verticalAlign = 'middle';
-  span.textContent = rank.abbr;
-  span.title = rank.name;
-  span.style.display = 'inline-block';  // Allows CSS black ::first-letter for LGM.
-  return span;
-}
-
-function getArrowSpan(arrow) {
-  const span = document.createElement('span');
-  span.classList.add('small');
-  span.style.verticalAlign = 'middle';
-  span.style.paddingLeft = '0.5em';
-  span.style.paddingRight = '0.5em';
-  span.textContent = arrow;
-  return span;
-}
-
-function getDeltaSpan(delta) {
-  const span = document.createElement('span');
-  span.style.fontWeight = 'bold';
-  span.style.verticalAlign = 'middle';
-  if (delta > 0) {
-    span.style.color = 'green';
-    span.textContent = `+${delta}`;
-  } else {
-    span.style.color = 'gray';
-    span.textContent = delta;
-  }
-  return span;
-}
-
-function getFinalRankUpSpan(rank, newRank, arrow) {
-  const span = document.createElement('span');
-  span.style.fontWeight = 'bold';
-  span.appendChild(getRankSpan(rank));
-  span.appendChild(getArrowSpan(arrow));
-  span.appendChild(getRankSpan(newRank));
-  return span;
-}
-
-function getPredictedRankupSpan(rank, deltaReqForRankUp, nextRank) {
-  const span = document.createElement('span');
-  span.style.fontWeight = 'bold';
-
-  if (nextRank == null) {  // LGM
-    span.appendChild(getRankSpan(rank));
-    return span;
-  }
-
-  span.appendChild(getDeltaSpan(deltaReqForRankUp));
-  span.appendChild(getArrowSpan(Unicode.SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL));
-  span.appendChild(getRankSpan(nextRank));
-  return span;
-}
-
-function updateStandings(resp) {
-  const rows = Array.from(document.querySelectorAll('table.standings tbody tr'));
-  for (const [idx, tableRow] of rows.entries()) {
-    const deltaCell = tableRow.querySelector(`.${DELTA_TD_CLASS}`);
-    const rankUpCell = tableRow.querySelector(`.${RANK_UP_TD_CLASS}`);
-    if (!deltaCell) {
-      continue;
-    }
-
-    const handle = tableRow.querySelector('td.contestant-cell').textContent.trim();
-    if (!(handle in resp.rowMap)) {
-      deltaCell.appendChild(getNaSpan());
-      continue;
-    }
-
-    const row = resp.rowMap[handle];
-    deltaCell.appendChild(getDeltaSpan(row.delta));
-    switch (resp.type) {
-      case 'FINAL':
-        if (row.rank.abbr === row.newRank.abbr) {  // No rank change
-          rankUpCell.appendChild(getNaSpan());
-        } else {
-          const arrow =
-            row.delta > 0
-              ? Unicode.SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL
-              : Unicode.BACKSLANTED_SOUTH_ARROW_WITH_HORIZONTAL_TAIL;
-          rankUpCell.appendChild(getFinalRankUpSpan(row.rank, row.newRank, arrow));
-        }
-        break;
-      case 'PREDICTED':
-        rankUpCell.appendChild(
-          getPredictedRankupSpan(row.rank, row.deltaReqForRankUp, row.nextRank));
-        if (row.delta >= row.deltaReqForRankUp) {
-          const greenTint = idx % 2 ? '#ebf7eb' : '#f2fff2';
-          rankUpCell.style.backgroundColor = greenTint;
-        }
-        break;
-      default:
-        throw new Error('Unknown prediction type: ' + resp.type);
-    }
+    tableRow.appendChild(deltaCell);
+    tableRow.appendChild(rankUpCell);
   }
 }
 
 function showFinal() {
-  PREDICT_TEXT.textContent = 'Final';
+  document.querySelector(`#${PREDICT_TEXT_ID}`).textContent = 'Final';
 }
 
 function showTimer() {
+  const predictTextSpan = document.querySelector(`#${PREDICT_TEXT_ID}`);
   const predictedAt = Date.now();
   function update() {
     const secSinceLastPredict = Math.floor((Date.now() - predictedAt) / 1000);
     if (secSinceLastPredict < 20) {
-      PREDICT_TEXT.textContent = 'Just now';
+      predictTextSpan.textContent = 'Just now';
     } else if (secSinceLastPredict < 60) {
-      PREDICT_TEXT.textContent = '<1m old';
+      predictTextSpan.textContent = '<1m old';
     } else {
-      PREDICT_TEXT.textContent = Math.floor(secSinceLastPredict / 60) + 'm old';
+      predictTextSpan.textContent = Math.floor(secSinceLastPredict / 60) + 'm old';
     }
   }
   update();
@@ -232,7 +248,6 @@ async function predict(contestId) {
     return;
   }
 
-  setupDeltaColumn(resp);
   updateStandings(resp);
   switch (resp.type) {
     case 'FINAL':
