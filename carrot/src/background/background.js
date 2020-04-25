@@ -37,7 +37,7 @@ async function listener(message) {
 
 function isUnratedByName(contestName) {
   const lower = contestName.toLowerCase();
-   return UNRATED_HINTS.some(hint => lower.includes(hint));
+  return UNRATED_HINTS.some(hint => lower.includes(hint));
 }
 
 function checkRatedByName(contestName) {
@@ -94,7 +94,7 @@ async function calcDeltas(contestId) {
   //
   // Try to get rating changes if the contest is finished else predict.
 
-  const { contest, problems_, rows} = await api.contest.standings(contestId);
+  const { contest, problems_, rows } = await api.contest.standings(contestId);
   CONTESTS.update(contest);
   checkRatedByName(contest.name);
   checkRatedByTeam(rows);
