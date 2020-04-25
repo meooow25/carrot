@@ -1,5 +1,5 @@
 const PING_INTERVAL = 3 * 60 * 1000;  // 3 minutes
-const DELTA_SPAN_CLASS = 'delta-span';
+const DELTA_TD_CLASS = 'delta-td';
 const RANK_UP_TD_CLASS = 'rank-up-td';
 
 const Unicode = {
@@ -65,12 +65,7 @@ function setupDeltaColumn(resp) {
       rankUpCell.classList.add('bottom', 'right');
     } else {
       deltaCell = document.createElement('td');
-      {
-        const span = document.createElement('span');
-        span.classList.add(DELTA_SPAN_CLASS);
-        span.style.fontWeight = 'bold';
-        deltaCell.appendChild(span);
-      }
+      deltaCell.classList.add(DELTA_TD_CLASS);
       rankUpCell = document.createElement('td');
       rankUpCell.classList.add('right', RANK_UP_TD_CLASS);
     }
@@ -118,6 +113,20 @@ function getArrowSpan(arrow) {
   return span;
 }
 
+function getDeltaSpan(delta) {
+  const span = document.createElement('span');
+  span.style.fontWeight = 'bold';
+  span.style.verticalAlign = 'middle';
+  if (delta > 0) {
+    span.style.color = 'green';
+    span.textContent = `+${delta}`;
+  } else {
+    span.style.color = 'gray';
+    span.textContent = delta;
+  }
+  return span;
+}
+
 function getFinalRankUpSpan(rank, newRank, arrow) {
   const span = document.createElement('span');
   span.style.fontWeight = 'bold';
@@ -136,12 +145,7 @@ function getPredictedRankupSpan(rank, deltaReqForRankUp, nextRank) {
     return span;
   }
 
-  const deltaSpan = document.createElement('span');
-  deltaSpan.style.color = 'green';
-  deltaSpan.style.verticalAlign = 'middle';
-  deltaSpan.textContent = `+${deltaReqForRankUp}`;
-
-  span.appendChild(deltaSpan);
+  span.appendChild(getDeltaSpan(deltaReqForRankUp));
   span.appendChild(getArrowSpan(Unicode.SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL));
   span.appendChild(getRankSpan(nextRank));
   return span;
@@ -150,29 +154,20 @@ function getPredictedRankupSpan(rank, deltaReqForRankUp, nextRank) {
 function updateStandings(resp) {
   const rows = Array.from(document.querySelectorAll('table.standings tbody tr'));
   for (const [idx, tableRow] of rows.entries()) {
-    const deltaSpan = tableRow.querySelector('.' + DELTA_SPAN_CLASS);
-    const rankUpCell = tableRow.querySelector('.' + RANK_UP_TD_CLASS);
-    if (!deltaSpan) {
+    const deltaCell = tableRow.querySelector(`.${DELTA_TD_CLASS}`);
+    const rankUpCell = tableRow.querySelector(`.${RANK_UP_TD_CLASS}`);
+    if (!deltaCell) {
       continue;
     }
 
     const handle = tableRow.querySelector('td.contestant-cell').textContent.trim();
     if (!(handle in resp.rowMap)) {
-      deltaSpan.style.color = 'lightgrey';
-      deltaSpan.textContent = 'N/A';
-      deltaSpan.classList.add('small');
+      deltaCell.appendChild(getNaSpan());
       continue;
     }
 
     const row = resp.rowMap[handle];
-    if (row.delta > 0) {
-      deltaSpan.style.color = 'green';
-      deltaSpan.textContent = '+' + row.delta;
-    } else {
-      deltaSpan.style.color = 'gray';
-      deltaSpan.textContent = row.delta;
-    }
-
+    deltaCell.appendChild(getDeltaSpan(row.delta));
     switch (resp.type) {
       case 'FINAL':
         if (row.rank.abbr === row.newRank.abbr) {  // No rank change
