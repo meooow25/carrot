@@ -1,14 +1,14 @@
 import * as api from '../common/cf-api.js';
 import * as settings from '../common/settings.js';
-import { Contestant, predict } from './predict.js';
+import { Contestant, PredictResult, predict } from './predict.js';
 import { Contests } from './contests.js';
+import { PredictResponse } from './predict-response.js';
 import { RatingChanges } from './rating-changes.js';
 import { Ratings } from './ratings.js';
 import { TopLevelCache } from './top-level-cache.js';
 import { UserPrefs } from './user-prefs.js';
 import { LOCAL } from '../common/storage-wrapper.js';
 
-const DEFAULT_RATING = 1500;
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
 const RATING_PENDING_MAX_DAYS = 3;
@@ -120,11 +120,12 @@ async function getFinalDeltas(contestId) {
   try {
     const ratingChanges = await RATING_CHANGES.fetch(contestId);
     if (ratingChanges && ratingChanges.length) {
-      let deltas = {};
+      const predictResults = []
       for (const change of ratingChanges) {
-        deltas[change.handle] = change.newRating - change.oldRating;
+        predictResults.push(
+          new PredictResult(change.handle, change.oldRating, change.newRating - change.oldRating));
       }
-      return { deltas: deltas, type: 'FINAL' };
+      return new PredictResponse(predictResults, PredictResponse.TYPE_FINAL);
     }
   } catch (er) {
     console.error('Error fetching deltas: ' + er);
@@ -132,24 +133,22 @@ async function getFinalDeltas(contestId) {
   throw new Error('UNRATED_CONTEST');
 }
 
-function getRating(ratingMap, handle) {
-  return ratingMap[handle] != null ? ratingMap[handle] : DEFAULT_RATING;
-}
-
 async function getPredictedDeltas(contest, rows) {
   const ratingMap = await RATINGS.fetchCurrentRatings(contest.startTimeSeconds * 1000);
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
     // For educational rounds, standings include contestants who are unrated.
-    rows = rows.filter(
-      r => getRating(ratingMap, r.party.members[0].handle) < EDU_ROUND_RATED_THRESHOLD);
+    rows = rows.filter(r => {
+      const handle = r.party.members[0].handle;
+      return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
+    });
   }
   const contestants = rows.map(r => {
     const handle = r.party.members[0].handle;
-    return new Contestant(handle, r.points, r.penalty, getRating(ratingMap, handle));
+    return new Contestant(handle, r.points, r.penalty, ratingMap[handle]);
   });
-  const deltas = predict(contestants);
-  return { deltas: deltas, type: 'PREDICTED' };
+  const predictResults = predict(contestants);
+  return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED);
 }
 
 // Prediction related code ends.
