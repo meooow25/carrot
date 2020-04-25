@@ -1,4 +1,4 @@
-import * as api from '../common/cf-api.js';
+import * as api from './cf-api.js';
 import * as settings from '../common/settings.js';
 import { Contestant, PredictResult, predict } from './predict.js';
 import { Contests } from './contests.js';
