@@ -137,7 +137,7 @@ async function getPredictedDeltas(contest, rows) {
   const ratingMap = await RATINGS.fetchCurrentRatings(contest.startTimeSeconds * 1000);
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
-    // For educational rounds, standings include contestants who are unrated.
+    // For educational rounds, standings include contestants for whom the contest is not rated.
     rows = rows.filter(r => {
       const handle = r.party.members[0].handle;
       return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
