@@ -9,14 +9,29 @@ import { FFTConv } from './conv.js';
  * The algorithm uses convolution via FFT for fast calculation.
  */
 
+const DEFAULT_RATING = 1500;
+
 class Contestant {
   constructor(party, points, penalty, rating) {
     this.party = party;
     this.points = points;
     this.penalty = penalty;
     this.rating = rating;
+    this.effectiveRating = rating == null ? DEFAULT_RATING : rating;
     this.rank = undefined;
     this.delta = undefined;
+  }
+}
+
+class PredictResult {
+  constructor(handle, rating, delta) {
+    this.handle = handle;
+    this.rating = rating;
+    this.delta = delta;
+  }
+
+  get effectiveRating() {
+    return this.rating == null ? DEFAULT_RATING : this.rating;
   }
 }
 
@@ -47,12 +62,6 @@ class RatingCalculator {
     this.adjustDeltas();
     const endTime = performance.now();
     console.info(`Deltas calculated in ${endTime - startTime}ms.`)
-
-    let deltas = {};
-    for (const c of this.contestants) {
-      deltas[c.party] = c.delta;
-    }
-    return deltas;
   }
 
   calcSeed() {
@@ -61,7 +70,7 @@ class RatingCalculator {
       counts.push(0);
     }
     for (const c of this.contestants) {
-      counts[c.rating + RATING_OFFSET] += 1;
+      counts[c.effectiveRating + RATING_OFFSET] += 1;
     }
     this.seed = fftConv.convolve(ELO_WIN_PROB, counts);
     for (let i = 0; i < this.seed.length; i++) {
@@ -89,10 +98,10 @@ class RatingCalculator {
 
   calcDeltas() {
     for (const c of this.contestants) {
-      const s = this.getSeed(c.rating, c.rating);
+      const s = this.getSeed(c.effectiveRating, c.effectiveRating);
       const midRank = Math.sqrt(c.rank * s);
-      const needRating = this.rankToRating(midRank, c.rating);
-      c.delta = Math.trunc((needRating - c.rating) / 2);
+      const needRating = this.rankToRating(midRank, c.effectiveRating);
+      c.delta = Math.trunc((needRating - c.effectiveRating) / 2);
     }
   }
 
@@ -110,7 +119,7 @@ class RatingCalculator {
   }
 
   adjustDeltas() {
-    this.contestants.sort((a, b) => b.rating - a.rating);
+    this.contestants.sort((a, b) => b.effectiveRating - a.effectiveRating);
     const n = this.contestants.length;
     {
       const deltaSum = this.contestants.reduce((a, b) => a + b.delta, 0);
@@ -131,7 +140,8 @@ class RatingCalculator {
 }
 
 function predict(contestants) {
-  return new RatingCalculator(contestants).calculate();
+  new RatingCalculator(contestants).calculate();
+  return contestants.map(c => new PredictResult(c.party, c.rating, c.delta));
 }
 
-export { Contestant, predict };
+export { Contestant, PredictResult, predict };
