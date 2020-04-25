@@ -1,4 +1,4 @@
-import * as api from '../common/cf-api.js';
+import * as api from './cf-api.js';
 import * as settings from '../common/settings.js';
 import { Contestant, PredictResult, predict } from './predict.js';
 import { Contests } from './contests.js';
@@ -21,15 +21,20 @@ const TOP_LEVEL_CACHE = new TopLevelCache();
 browser.runtime.onMessage.addListener(listener);
 
 async function listener(message) {
-  switch (message.type) {
-    case 'PREDICT':
-      return await getDeltas(message.contestId);
-    case 'PING':
-      await maybeUpdateContestList();
-      await maybeUpdateRatings();
-      return;
-    default:
-      throw new Error('Unknown message type');
+  try {
+    switch (message.type) {
+      case 'PREDICT':
+        return await getDeltas(message.contestId);
+      case 'PING':
+        await maybeUpdateContestList();
+        await maybeUpdateRatings();
+        return;
+      default:
+        throw new Error('Unknown message type');
+    }
+  } catch (er) {
+    console.error(er);
+    throw er;
   }
 }
 
@@ -37,7 +42,7 @@ async function listener(message) {
 
 function isUnratedByName(contestName) {
   const lower = contestName.toLowerCase();
-   return UNRATED_HINTS.some(hint => lower.includes(hint));
+  return UNRATED_HINTS.some(hint => lower.includes(hint));
 }
 
 function checkRatedByName(contestName) {
@@ -94,7 +99,7 @@ async function calcDeltas(contestId) {
   //
   // Try to get rating changes if the contest is finished else predict.
 
-  const { contest, problems_, rows} = await api.contest.standings(contestId);
+  const { contest, problems_, rows } = await api.contest.standings(contestId);
   CONTESTS.update(contest);
   checkRatedByName(contest.name);
   checkRatedByTeam(rows);
@@ -137,7 +142,7 @@ async function getPredictedDeltas(contest, rows) {
   const ratingMap = await RATINGS.fetchCurrentRatings(contest.startTimeSeconds * 1000);
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
-    // For educational rounds, standings include contestants who are unrated.
+    // For educational rounds, standings include contestants for whom the contest is not rated.
     rows = rows.filter(r => {
       const handle = r.party.members[0].handle;
       return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
