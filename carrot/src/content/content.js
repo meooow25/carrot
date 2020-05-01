@@ -219,7 +219,6 @@ function showFinal() {
   predictTextSpan.textContent = 'Final';
 }
 
-
 function showTimer(fetchTime) {
   const predictTextSpan = document.getElementById(PREDICT_TEXT_ID);
   function update() {
