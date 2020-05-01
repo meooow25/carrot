@@ -136,7 +136,7 @@ function makeRankUpDataCell() {
   return cell;
 }
 
-function populateDeltaAndRankUpCells(row, type, greenTint, deltaCell, rankUpCell) {
+function populateDeltaAndRankUpCells(row, type, rankUpTint, deltaCell, rankUpCell) {
   if (row == null) {
     deltaCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
     rankUpCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
@@ -160,7 +160,8 @@ function populateDeltaAndRankUpCells(row, type, greenTint, deltaCell, rankUpCell
       rankUpCell.appendChild(
         makePredictedRankUpSpan(row.rank, row.deltaReqForRankUp, row.nextRank));
       if (row.delta >= row.deltaReqForRankUp) {
-        rankUpCell.style.backgroundColor = greenTint;
+        const [color, priority] = rankUpTint;
+        rankUpCell.style.setProperty('background-color', color, priority);
       }
       break;
     default:
@@ -200,8 +201,14 @@ function updateStandings(resp) {
       deltaCell = makeDeltaDataCell();
       rankUpCell = makeRankUpDataCell();
       const handle = tableRow.querySelector('td.contestant-cell').textContent.trim();
-      const greenTint = idx % 2 ? '#ebf7eb' : '#f2fff2';
-      populateDeltaAndRankUpCells(resp.rowMap[handle], resp.type, greenTint, deltaCell, rankUpCell);
+      let rankUpTint;
+      if (tableRow.classList.contains('highlighted-row')) {
+        rankUpTint = ['#d1eef2', 'important'];  // Need !important to override !important.
+      } else {
+        rankUpTint = [idx % 2 ? '#ebf8eb' : '#f2fff2', undefined];
+      }
+      populateDeltaAndRankUpCells(
+        resp.rowMap[handle], resp.type, rankUpTint, deltaCell, rankUpCell);
     }
 
     if (idx % 2) {
