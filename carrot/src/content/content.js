@@ -209,17 +209,16 @@ function showFinal() {
   document.querySelector(`#${PREDICT_TEXT_ID}`).textContent = 'Final';
 }
 
-function showTimer() {
+function showTimer(fetchTime) {
   const predictTextSpan = document.querySelector(`#${PREDICT_TEXT_ID}`);
-  const predictedAt = Date.now();
   function update() {
-    const secSinceLastPredict = Math.floor((Date.now() - predictedAt) / 1000);
-    if (secSinceLastPredict < 20) {
+    const secSincePredict = Math.floor((Date.now() - fetchTime) / 1000);
+    if (secSincePredict < 20) {
       predictTextSpan.textContent = 'Just now';
-    } else if (secSinceLastPredict < 60) {
+    } else if (secSincePredict < 60) {
       predictTextSpan.textContent = '<1m old';
     } else {
-      predictTextSpan.textContent = Math.floor(secSinceLastPredict / 60) + 'm old';
+      predictTextSpan.textContent = Math.floor(secSincePredict / 60) + 'm old';
     }
   }
   update();
@@ -250,7 +249,7 @@ async function predict(contestId) {
       showFinal();
       break;
     case 'PREDICTED':
-      showTimer();
+      showTimer(resp.fetchTime);
       break;
     default:
       throw new Error('Unknown prediction type: ' + resp.type);

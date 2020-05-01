@@ -15,10 +15,11 @@ class PredictResponseRow {
 }
 
 class PredictResponse {
-  constructor(predictResults, type) {
+  constructor(predictResults, type, fetchTime) {
     PredictResponse.assertTypeOk(type);
     this.rowMap = {};
     this.type = type;
+    this.fetchTime = fetchTime;
     this.populateMap(predictResults);
   }
 
