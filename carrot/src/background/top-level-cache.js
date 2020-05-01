@@ -1,4 +1,4 @@
-const TIMEOUT = 15 * 1000;  // 15 seconds
+const TIMEOUT = 30 * 1000;  // 30 seconds
 
 /**
  * Short time cache on the response to a prediction request.

@@ -213,7 +213,7 @@ function showTimer(fetchTime) {
   const predictTextSpan = document.querySelector(`#${PREDICT_TEXT_ID}`);
   function update() {
     const secSincePredict = Math.floor((Date.now() - fetchTime) / 1000);
-    if (secSincePredict < 20) {
+    if (secSincePredict < 30) {
       predictTextSpan.textContent = 'Just now';
     } else if (secSincePredict < 60) {
       predictTextSpan.textContent = '<1m old';
