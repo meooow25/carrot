@@ -100,6 +100,7 @@ async function calcDeltas(contestId) {
   // Try to get rating changes if the contest is finished else predict.
 
   const { contest, problems_, rows } = await api.contest.standings(contestId);
+  const standingsFetchTime = Date.now();
   CONTESTS.update(contest);
   checkRatedByName(contest.name);
   checkRatedByTeam(rows);
@@ -118,19 +119,20 @@ async function calcDeltas(contestId) {
     }
   }
   prefs.checkPredictDeltasEnabled();
-  return await getPredictedDeltas(contest, rows);
+  return await getPredictedDeltas(contest, rows, standingsFetchTime);
 }
 
 async function getFinalDeltas(contestId) {
   try {
     const ratingChanges = await RATING_CHANGES.fetch(contestId);
+    const fetchTime = Date.now();
     if (ratingChanges && ratingChanges.length) {
       const predictResults = []
       for (const change of ratingChanges) {
         predictResults.push(
           new PredictResult(change.handle, change.oldRating, change.newRating - change.oldRating));
       }
-      return new PredictResponse(predictResults, PredictResponse.TYPE_FINAL);
+      return new PredictResponse(predictResults, PredictResponse.TYPE_FINAL, fetchTime);
     }
   } catch (er) {
     console.error('Error fetching deltas: ' + er);
@@ -138,7 +140,7 @@ async function getFinalDeltas(contestId) {
   throw new Error('UNRATED_CONTEST');
 }
 
-async function getPredictedDeltas(contest, rows) {
+async function getPredictedDeltas(contest, rows, fetchTime) {
   const ratingMap = await RATINGS.fetchCurrentRatings(contest.startTimeSeconds * 1000);
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
@@ -153,7 +155,7 @@ async function getPredictedDeltas(contest, rows) {
     return new Contestant(handle, r.points, r.penalty, ratingMap[handle]);
   });
   const predictResults = predict(contestants);
-  return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED);
+  return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED, fetchTime);
 }
 
 // Prediction related code ends.
