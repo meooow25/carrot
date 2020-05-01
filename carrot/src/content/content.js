@@ -125,6 +125,17 @@ function makeRankUpFooterCell() {
   return cell;
 }
 
+function makeDeltaDataCell() {
+  const cell = document.createElement('td');
+  return cell;
+}
+
+function makeRankUpDataCell() {
+  const cell = document.createElement('td');
+  cell.classList.add('right');
+  return cell;
+}
+
 function populateDeltaAndRankUpCells(row, type, greenTint, deltaCell, rankUpCell) {
   if (row == null) {
     deltaCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
@@ -185,11 +196,9 @@ function updateStandings(resp) {
     } else if (idx == rows.length - 1) {
       deltaCell = makeDeltaFooterCell();
       rankUpCell = makeDeltaFooterCell();
-      rankUpCell.classList.add('bottom', 'right');
     } else {
-      deltaCell = document.createElement('td');
-      rankUpCell = document.createElement('td');
-      rankUpCell.classList.add('right');
+      deltaCell = makeDeltaDataCell();
+      rankUpCell = makeRankUpDataCell();
       const handle = tableRow.querySelector('td.contestant-cell').textContent.trim();
       const greenTint = idx % 2 ? '#ebf7eb' : '#f2fff2';
       populateDeltaAndRankUpCells(resp.rowMap[handle], resp.type, greenTint, deltaCell, rankUpCell);
@@ -206,11 +215,12 @@ function updateStandings(resp) {
 }
 
 function showFinal() {
-  document.querySelector(`#${PREDICT_TEXT_ID}`).textContent = 'Final';
+  const predictTextSpan = document.getElementById(PREDICT_TEXT_ID);
+  predictTextSpan.textContent = 'Final';
 }
 
 function showTimer() {
-  const predictTextSpan = document.querySelector(`#${PREDICT_TEXT_ID}`);
+  const predictTextSpan = document.getElementById(PREDICT_TEXT_ID);
   const predictedAt = Date.now();
   function update() {
     const secSinceLastPredict = Math.floor((Date.now() - predictedAt) / 1000);
