@@ -1,5 +1,7 @@
 body {
   background-color:#fff9f5;
+  width: max-content;
+  margin: 0;
 }
 
 .main {
@@ -27,8 +29,6 @@ body {
 #version {
   font-size: 10px;
   font-family: sans-serif;
-  align-self: flex-end;
-  margin-bottom: 9px;
 }
 
 #settings {
