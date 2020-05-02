@@ -2,18 +2,19 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="options.css">
   </head>
   <body>
-    <ul style="list-style-type:none;">
+    <ul>
       <li>
         <input type="checkbox" id="enable-predict-deltas">
         <label for="enable-predict-deltas">
           Predict and show deltas for running contests and recently finished contests
         </label>
-        <ul style="list-style-type: none; margin-top: 2px; padding-left: 25px;">
+        <ul class="inner-ul">
           <li>
             <details>
-              <summary style="cursor: pointer;">
+              <summary>
                 TL;DR: Disable this if you are on a data capped network
               </summary>
               If you are on Codeforces and a contest starts in less than an hour, having this
