@@ -1,0 +1,25 @@
+body {
+  min-width: 500px;
+  min-height: 180px;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  padding-top: 5px;
+}
+
+.inner-ul {
+  padding-left: 25px;
+}
+
+details {
+  margin-left: 10px;
+}
+
+details > summary {
+  margin-left: -10px;
+  cursor: pointer;
+}

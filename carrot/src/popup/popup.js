@@ -3,7 +3,8 @@ function setup() {
 
   document.querySelector('#version').textContent = 'v' + manifest.version;
   document.querySelector('#title').textContent = manifest.name;
-  document.querySelector('#icon').src = manifest.browser_action.default_icon;
+  document.querySelector('#icon').src =
+    browser.runtime.getURL(manifest.browser_action.default_icon);
 
   const settings = document.querySelector('#settings');
   settings.addEventListener('click', () => {
