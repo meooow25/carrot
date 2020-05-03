@@ -1,6 +1,6 @@
 # Carrot
 
-A Firefox extension for Codeforces that can
+A browser extension for [Codeforces](https://codeforces.com) that can
 - Calculate rating changes for a contest while it is running, based on the current standings.
 - Show the final rating changes for finished contests.
 
@@ -17,7 +17,7 @@ Not necessarily. The CF-Predictor extension communicates with a server, while Ca
 FFT. The answer is always FFT.
 
 #### Cool, how do I install it?
-Carrot is available on [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/carrot/).
+Carrot is available for [Firefox](https://addons.mozilla.org/en-US/firefox/addon/carrot/) and [Chrome](https://chrome.google.com/webstore/detail/carrot/gakohpplicjdhhfllilcjpfildodfnnn).
 
 #### Your code sucks
 Suggestions and ideas for improvements are most welcome.
