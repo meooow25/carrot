@@ -1,4 +1,21 @@
-#!/bin/sh
+#!/bin/bash
+
+# Requires jq (https://stedolan.github.io/jq/)
+#
+# Local installation
+#   Firefox: Install directly
+#   Chrome: Run ./build.sh -c, install tmp-chrome/carrot
+#
+# Preparing the zip for release
+#   ./build.sh -f -c -z will prepare the zips in release/
+
+
+set -e
+
+USAGE='Usage: [-f|--firefox] [-c|--chrome] [-z|--zip]
+  At least one of -f or -c must be present.
+  -f must be accompanied by -z.'
+
 
 jq_manifest_replace() {
   local jq_command="$1"
@@ -10,15 +27,15 @@ jq_manifest_replace() {
 
 pack_firefox() {
   local firefox_zip="$1"
-  local release_dir="$2"
-  local tmp_dir="$3"
+  local copy_dir="$2"
+  local release_dir="$3"
 
   mkdir -p "${release_dir}"
   printf "Packing ${release_dir}/${firefox_zip}..."
 
-  mkdir -p "${tmp_dir}"
-  cp -r carrot "${tmp_dir}"
-  cd "${tmp_dir}/carrot"
+  mkdir -p "${copy_dir}"
+  cp -r carrot "${copy_dir}"
+  cd "${copy_dir}/carrot"
 
   # Remove browser_specific_settings from manifest.
   jq_manifest_replace 'del(.browser_specific_settings)' manifest.json
@@ -29,29 +46,33 @@ pack_firefox() {
 
   # Clean up.
   cd ../..
-  rm -r "${tmp_dir}/carrot"
+  rm -r "${copy_dir}/carrot"
 
   printf " Done!\n"
 }
 
 pack_chrome() {
   local chrome_zip="$1"
-  local release_dir="$2"
-  local tmp_dir="$3"
+  local copy_dir="$2"
+  local release_dir="$3"
 
-  mkdir -p "${release_dir}"
-  printf "Packing ${release_dir}/${chrome_zip}..."
+  if [[ -n "${release_dir}" ]]; then
+    mkdir -p "${release_dir}"
+    printf "Packing ${release_dir}/${chrome_zip}..."
+  else
+    printf "Setting up ${copy_dir}/carrot..."
+  fi
 
-  mkdir -p "${tmp_dir}"
-  cp -r carrot "${tmp_dir}"
-  cd "${tmp_dir}"
+  mkdir -p "${copy_dir}"
+  cp -r carrot "${copy_dir}"
+  cd "${copy_dir}"
 
   # Download the polyfill.
   local polyfill_url='https://unpkg.com/webextension-polyfill@0.6.0/dist/browser-polyfill.min.js'
   local polyfill_download_path='downloads/browser-polyfill.min.js'
   local polyfill_path='polyfill/browser-polyfill.min.js'
   mkdir -p downloads
-  if [ ! -f "${polyfill_download_path}" ]; then
+  if [[ ! -f "${polyfill_download_path}" ]]; then
     curl -s -o "${polyfill_download_path}" "${polyfill_url}"
     sed -i '/sourceMappingURL/ d' "${polyfill_download_path}"
   fi
@@ -91,22 +112,90 @@ pack_chrome() {
       del (.options_ui.browser_style) |
       del (.browser_action.browser_style)' manifest.json
 
-  # Prepare the zip.
-  rm -f "../../${release_dir}/${chrome_zip}"
-  zip -q -r "../../${release_dir}/${chrome_zip}" .
-
-  # Clean up.
+  if [[ -n "${release_dir}" ]]; then
+    # Prepare the zip.
+    rm -f "../../${release_dir}/${chrome_zip}"
+    zip -q -r "../../${release_dir}/${chrome_zip}" .
+  fi
+  
   cd ../..
-  rm -r "${tmp_dir}/carrot"
+
+  # Don't clean up copy_dir/carrot since it is used for local installation.
 
   printf " Done!\n"
 }
 
-set -e
+main() {
+  local help=0
+  local firefox=0
+  local chrome=0
+  local zip=0
+  local unknown=()
 
-version=$(jq -r .version carrot/manifest.json)
-firefox_zip="carrot-firefox-v${version}.zip"
-chrome_zip="carrot-chrome-v${version}.zip"
+  while (($# > 0)); do
+    arg="$1"
+    case "${arg}" in
+      -h|--help)
+        help=1
+        shift
+        ;;
+      -f|--firefox)
+        firefox=1
+        shift
+        ;;
+      -c|--chrome)
+        chrome=1
+        shift
+        ;;
+      -z|--zip)
+        zip=1
+        shift
+        ;;
+      *)
+        unknown+=("$1")
+        shift
+        ;;
+    esac
+  done
 
-pack_firefox "${firefox_zip}" release tmp
-pack_chrome "${chrome_zip}" release tmp
+  if ((help != 0)); then
+    echo "${USAGE}"
+    exit
+  fi
+
+  if ((${#unknown[@]} != 0)); then
+    echo "Unknown args: ${unknown[@]}"
+    echo "  -h to see usage"
+    exit 1
+  fi
+
+  if ((firefox == 0 && chrome == 0)); then
+    echo "At least one of -f|--firefox or -c|--chrome expected"
+    exit 1
+  fi
+
+  if ((firefox != 0 && zip == 0)); then
+    echo "-f|--firefox must be accompanied by -z|--zip"
+    exit 1
+  fi
+
+
+  local version=$(jq -r .version carrot/manifest.json)
+  
+  local release_dir=''
+  if ((zip != 0)); then
+    release_dir='release'
+  fi
+
+  if ((firefox != 0)); then
+    firefox_zip="carrot-firefox-v${version}.zip"
+    pack_firefox "${firefox_zip}" tmp-firefox "${release_dir}"
+  fi
+
+  if ((chrome != 0)); then
+    chrome_zip="carrot-chrome-v${version}.zip"
+    pack_chrome "${chrome_zip}" tmp-chrome "${release_dir}"
+  fi
+}
+
+main "$@"
