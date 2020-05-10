@@ -1,4 +1,4 @@
-import { FFTConv } from './conv.js';
+import { FFTConv } from '/src/util/conv.js';
 
 /**
  * Rating calculation code adapted from TLE at

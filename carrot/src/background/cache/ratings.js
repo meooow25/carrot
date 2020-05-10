@@ -1,4 +1,4 @@
-import { Lock } from './lock.js';
+import { Lock } from '/src/util/lock.js';
 
 const PREFETCH_INTERVAL = 60 * 60 * 1000;  // 1 hour
 
