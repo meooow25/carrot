@@ -5,7 +5,7 @@ import { FFTConv } from '../util/conv.js';
  * https://github.com/cheran-senthil/TLE/blob/master/tle/util/ranklist/rating_calculator.py
  * originally developed by algmyr (https://github.com/algmyr) based on code by Mike Mirzayanov at
  * https://codeforces.com/contest/1/submission/13861109.
- * 
+ *
  * The algorithm uses convolution via FFT for fast calculation.
  */
 
@@ -65,7 +65,7 @@ class RatingCalculator {
     this.adjustDeltas();
     const endTime = performance.now();
     if (PRINT_PERFORMANCE) {
-      console.info(`Deltas calculated in ${endTime - startTime}ms.`)
+      console.info(`Deltas calculated in ${endTime - startTime}ms.`);
     }
   }
 
@@ -93,7 +93,8 @@ class RatingCalculator {
   }
 
   reassignRanks() {
-    this.contestants.sort((a, b) => a.points != b.points ? b.points - a.points : a.penalty - b.penalty);
+    this.contestants.sort((a, b) =>
+      a.points != b.points ? b.points - a.points : a.penalty - b.penalty);
     let lastPoints, lastPenalty, rank;
     for (let i = this.contestants.length - 1; i >= 0; i--) {
       const c = this.contestants[i];
@@ -151,7 +152,7 @@ class RatingCalculator {
 
 function predict(contestants) {
   new RatingCalculator(contestants).calculate();
-  return contestants.map(c => new PredictResult(c.party, c.rating, c.delta));
+  return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta));
 }
 
 export { Contestant, PredictResult, predict };

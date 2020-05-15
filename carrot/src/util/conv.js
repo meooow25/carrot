@@ -16,7 +16,7 @@ Complex.I = new Complex(0, 1);
 
 /**
  * Performs convolution of real sequences using Cooley-Tukey FFT in O(n log n).
- * 
+ *
  * >> const fftConv = new FFTConv(8);  // Initialized with n = 8
  * >> const a = [0.125, 0.25, 0.5];
  * >> const b = [4, 3, 2, 1];
@@ -38,7 +38,7 @@ class FFTConv {
     this.rev = new Array(this.n);
     this.rev[0] = 0;
     for (let i = 1; i < this.n; i++) {
-      this.rev[i] = this.rev[i >> 1] >> 1 | ((i & 1) << (k - 1));
+      this.rev[i] = (this.rev[i >> 1] >> 1) | ((i & 1) << (k - 1));
     }
   }
 

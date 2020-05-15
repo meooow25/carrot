@@ -32,14 +32,14 @@ const contest = {
       count: count,
       handles: handles && handles.length ? handles.join(';') : undefined,
       room: room,
-      showUnofficial: showUnofficial
+      showUnofficial: showUnofficial,
     });
   },
 
   async ratingChanges(contestId) {
     return await apiFetch('contest.ratingChanges', { contestId: contestId });
   },
-}
+};
 
 const user = {
   async ratedList(activeOnly) {

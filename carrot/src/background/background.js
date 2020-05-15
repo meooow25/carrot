@@ -44,7 +44,7 @@ async function listener(message) {
 
 function isUnratedByName(contestName) {
   const lower = contestName.toLowerCase();
-  return UNRATED_HINTS.some(hint => lower.includes(hint));
+  return UNRATED_HINTS.some((hint) => lower.includes(hint));
 }
 
 function checkRatedByName(contestName) {
@@ -54,7 +54,7 @@ function checkRatedByName(contestName) {
 }
 
 function checkRatedByTeam(rows) {
-  if (rows.some(row => row.party.teamId != null || row.party.teamName != null)) {
+  if (rows.some((row) => row.party.teamId != null || row.party.teamName != null)) {
     throw new Error('UNRATED_CONTEST');
   }
 }
@@ -129,7 +129,7 @@ async function getFinalDeltas(contestId) {
     const ratingChanges = await RATING_CHANGES.fetch(contestId);
     const fetchTime = Date.now();
     if (ratingChanges && ratingChanges.length) {
-      const predictResults = []
+      const predictResults = [];
       for (const change of ratingChanges) {
         predictResults.push(
           new PredictResult(change.handle, change.oldRating, change.newRating - change.oldRating));
@@ -147,14 +147,14 @@ async function getPredictedDeltas(contest, rows, fetchTime) {
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
     // For educational rounds, standings include contestants for whom the contest is not rated.
-    rows = rows.filter(r => {
-      const handle = r.party.members[0].handle;
+    rows = rows.filter((row) => {
+      const handle = row.party.members[0].handle;
       return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
     });
   }
-  const contestants = rows.map(r => {
-    const handle = r.party.members[0].handle;
-    return new Contestant(handle, r.points, r.penalty, ratingMap[handle]);
+  const contestants = rows.map((row) => {
+    const handle = row.party.members[0].handle;
+    return new Contestant(handle, row.points, row.penalty, ratingMap[handle]);
   });
   const predictResults = predict(contestants);
   return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED, fetchTime);
