@@ -1,13 +1,15 @@
+import { LOCAL } from '../util/storage-wrapper.js';
+import * as settings from '../util/settings.js';
+import Contests from './cache/contests.js';
+import RatingChanges from './cache/rating-changes.js';
+import Ratings from './cache/ratings.js';
+import TopLevelCache from './cache/top-level-cache.js';
+import predict, { Contestant, PredictResult } from './predict.js';
+import PredictResponse from './predict-response.js';
+import UserPrefs from './user-prefs.js';
 import * as api from './cf-api.js';
-import * as settings from '../common/settings.js';
-import { Contestant, PredictResult, predict } from './predict.js';
-import { Contests } from './contests.js';
-import { PredictResponse } from './predict-response.js';
-import { RatingChanges } from './rating-changes.js';
-import { Ratings } from './ratings.js';
-import { TopLevelCache } from './top-level-cache.js';
-import { UserPrefs } from './user-prefs.js';
-import { LOCAL } from '../common/storage-wrapper.js';
+
+const DEBUG_FORCE_PREDICT = false;
 
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
@@ -42,7 +44,7 @@ async function listener(message) {
 
 function isUnratedByName(contestName) {
   const lower = contestName.toLowerCase();
-  return UNRATED_HINTS.some(hint => lower.includes(hint));
+  return UNRATED_HINTS.some((hint) => lower.includes(hint));
 }
 
 function checkRatedByName(contestName) {
@@ -52,7 +54,7 @@ function checkRatedByName(contestName) {
 }
 
 function checkRatedByTeam(rows) {
-  if (rows.some(row => row.party.teamId != null || row.party.teamName != null)) {
+  if (rows.some((row) => row.party.teamId != null || row.party.teamName != null)) {
     throw new Error('UNRATED_CONTEST');
   }
 }
@@ -82,7 +84,7 @@ async function calcDeltas(contestId) {
   }
 
   // If the contest is old, get rating changes and don't try to predict.
-  if (CONTESTS.hasCached(contestId)) {
+  if (!DEBUG_FORCE_PREDICT && CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.get(contestId);
     checkRatedByName(contest.name);
     if (isOldContest(contest)) {
@@ -105,7 +107,7 @@ async function calcDeltas(contestId) {
   checkRatedByName(contest.name);
   checkRatedByTeam(rows);
 
-  if (contest.phase == 'FINISHED') {
+  if (!DEBUG_FORCE_PREDICT && contest.phase == 'FINISHED') {
     try {
       const deltas = await getFinalDeltas(contestId);
       prefs.checkFinalDeltasEnabled();
@@ -127,7 +129,7 @@ async function getFinalDeltas(contestId) {
     const ratingChanges = await RATING_CHANGES.fetch(contestId);
     const fetchTime = Date.now();
     if (ratingChanges && ratingChanges.length) {
-      const predictResults = []
+      const predictResults = [];
       for (const change of ratingChanges) {
         predictResults.push(
           new PredictResult(change.handle, change.oldRating, change.newRating - change.oldRating));
@@ -145,14 +147,14 @@ async function getPredictedDeltas(contest, rows, fetchTime) {
   const isEduRound = contest.name.toLowerCase().includes('educational');
   if (isEduRound) {
     // For educational rounds, standings include contestants for whom the contest is not rated.
-    rows = rows.filter(r => {
-      const handle = r.party.members[0].handle;
+    rows = rows.filter((row) => {
+      const handle = row.party.members[0].handle;
       return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
     });
   }
-  const contestants = rows.map(r => {
-    const handle = r.party.members[0].handle;
-    return new Contestant(handle, r.points, r.penalty, ratingMap[handle]);
+  const contestants = rows.map((row) => {
+    const handle = row.party.members[0].handle;
+    return new Contestant(handle, row.points, row.penalty, ratingMap[handle]);
   });
   const predictResults = predict(contestants);
   return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED, fetchTime);

@@ -1,17 +1,18 @@
-import { FFTConv } from './conv.js';
+import FFTConv from '../util/conv.js';
 
 /**
  * Rating calculation code adapted from TLE at
  * https://github.com/cheran-senthil/TLE/blob/master/tle/util/ranklist/rating_calculator.py
  * originally developed by algmyr (https://github.com/algmyr) based on code by Mike Mirzayanov at
  * https://codeforces.com/contest/1/submission/13861109.
- * 
+ *
  * The algorithm uses convolution via FFT for fast calculation.
  */
 
+const PRINT_PERFORMANCE = false;
 const DEFAULT_RATING = 1500;
 
-class Contestant {
+export class Contestant {
   constructor(party, points, penalty, rating) {
     this.party = party;
     this.points = points;
@@ -23,7 +24,7 @@ class Contestant {
   }
 }
 
-class PredictResult {
+export class PredictResult {
   constructor(handle, rating, delta) {
     this.handle = handle;
     this.rating = rating;
@@ -37,15 +38,18 @@ class PredictResult {
 
 const MAX_RATING_LIMIT = 6000;
 const MIN_RATING_LIMIT = -500;
-const ELO_OFFSET = MAX_RATING_LIMIT - MIN_RATING_LIMIT;
+const RATING_RANGE_LEN = MAX_RATING_LIMIT - MIN_RATING_LIMIT;
+const ELO_OFFSET = RATING_RANGE_LEN;
 const RATING_OFFSET = -MIN_RATING_LIMIT;
 
-const ELO_WIN_PROB = [];
-for (let i = -(MAX_RATING_LIMIT - MIN_RATING_LIMIT); i <= (MAX_RATING_LIMIT - MIN_RATING_LIMIT); i++) {
-  ELO_WIN_PROB.push(1 / (1 + Math.pow(10, i / 400)));
+// The probability of contestant with rating x winning versus contestant with rating y
+// is given by ELO_WIN_PROB[y - x + ELO_OFFSET].
+const ELO_WIN_PROB = new Array(2 * RATING_RANGE_LEN + 1);
+for (let i = -RATING_RANGE_LEN; i <= RATING_RANGE_LEN; i++) {
+  ELO_WIN_PROB[i + ELO_OFFSET] = 1 / (1 + Math.pow(10, i / 400));
 }
 
-const fftConv = new FFTConv(ELO_WIN_PROB.length);
+const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 
 class RatingCalculator {
   constructor(contestants) {
@@ -54,24 +58,26 @@ class RatingCalculator {
   }
 
   calculate() {
-    console.info(`Calculating deltas for ${this.contestants.length} contestants...`);
     const startTime = performance.now();
     this.calcSeed();
     this.reassignRanks();
     this.calcDeltas();
     this.adjustDeltas();
     const endTime = performance.now();
-    console.info(`Deltas calculated in ${endTime - startTime}ms.`)
+    if (PRINT_PERFORMANCE) {
+      console.info(`Deltas calculated in ${endTime - startTime}ms.`);
+    }
   }
 
   calcSeed() {
-    const counts = [];
-    for (let i = MIN_RATING_LIMIT; i <= MAX_RATING_LIMIT; i++) {
-      counts.push(0);
-    }
+    const counts = new Array(RATING_RANGE_LEN).fill(0);
     for (const c of this.contestants) {
       counts[c.effectiveRating + RATING_OFFSET] += 1;
     }
+    // Expected rank for a contestant x is 1 + sum of ELO win probabilities of every other
+    // contestant versus x.
+    // seed[r] is the expected rank of a contestant with rating r, who did not participate in the
+    // contest, if he had participated.
     this.seed = fftConv.convolve(ELO_WIN_PROB, counts);
     for (let i = 0; i < this.seed.length; i++) {
       this.seed[i] += 1;
@@ -79,11 +85,16 @@ class RatingCalculator {
   }
 
   getSeed(r, exclude) {
+    // This returns the expected rank of a contestant with rating r who did not participate in the
+    // contest, leaving a single contestant out of the contest whose rating is exclude.
+    // Equivalently this is the expected rank of a contestant with true rating exclude, who did
+    // participate in the contest, assuming his rating had been r.
     return this.seed[r + ELO_OFFSET + RATING_OFFSET] - ELO_WIN_PROB[r - exclude + ELO_OFFSET];
   }
 
   reassignRanks() {
-    this.contestants.sort((a, b) => a.points != b.points ? b.points - a.points : a.penalty - b.penalty);
+    this.contestants.sort((a, b) =>
+      a.points != b.points ? b.points - a.points : a.penalty - b.penalty);
     let lastPoints, lastPenalty, rank;
     for (let i = this.contestants.length - 1; i >= 0; i--) {
       const c = this.contestants[i];
@@ -98,8 +109,8 @@ class RatingCalculator {
 
   calcDeltas() {
     for (const c of this.contestants) {
-      const s = this.getSeed(c.effectiveRating, c.effectiveRating);
-      const midRank = Math.sqrt(c.rank * s);
+      const seed = this.getSeed(c.effectiveRating, c.effectiveRating);
+      const midRank = Math.sqrt(c.rank * seed);
       const needRating = this.rankToRating(midRank, c.effectiveRating);
       c.delta = Math.trunc((needRating - c.effectiveRating) / 2);
     }
@@ -139,9 +150,7 @@ class RatingCalculator {
   }
 }
 
-function predict(contestants) {
+export default function predict(contestants) {
   new RatingCalculator(contestants).calculate();
-  return contestants.map(c => new PredictResult(c.party, c.rating, c.delta));
+  return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta));
 }
-
-export { Contestant, PredictResult, predict };

@@ -1,5 +1,9 @@
 import { SYNC } from './storage-wrapper.js';
 
+/**
+ * Exports utility functions to get or set user preferences to storage.
+ */
+
 const ENABLE_PREDICT_DELTAS = 'settings.enablePredictDeltas';
 const ENABLE_FINAL_DELTAS = 'settings.enableFetchDeltas';
 const ENABLE_PREFETCH_RATINGS = 'settings.enablePrefetchRatings';
@@ -13,8 +17,6 @@ function boolSetterGetter(key, defaultValue) {
   };
 }
 
-const enablePredictDeltas = boolSetterGetter(ENABLE_PREDICT_DELTAS, true);
-const enableFinalDeltas = boolSetterGetter(ENABLE_FINAL_DELTAS, true);
-const enablePrefetchRatings = boolSetterGetter(ENABLE_PREFETCH_RATINGS, true);
-
-export { enablePredictDeltas, enableFinalDeltas, enablePrefetchRatings };
+export const enablePredictDeltas = boolSetterGetter(ENABLE_PREDICT_DELTAS, true);
+export const enableFinalDeltas = boolSetterGetter(ENABLE_FINAL_DELTAS, true);
+export const enablePrefetchRatings = boolSetterGetter(ENABLE_PREFETCH_RATINGS, true);

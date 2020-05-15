@@ -1,4 +1,4 @@
-import { Lock } from './lock.js';
+import Lock from '../../util/lock.js';
 
 const PREFETCH_INTERVAL = 60 * 60 * 1000;  // 1 hour
 
@@ -12,7 +12,7 @@ const RATINGS = 'cache.ratings';
  * data fetched is around 14MB so we would rather not refetch it. We keep only handles and ratings
  * in storage, which uses around 4MB.
  */
-class Ratings {
+export default class Ratings {
   constructor(api, storage) {
     this.api = api;
     this.storage = storage;
@@ -57,5 +57,3 @@ class Ratings {
     await this.storage.set(RATINGS, ratingMap);
   }
 }
-
-export { Ratings };

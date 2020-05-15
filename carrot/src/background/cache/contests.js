@@ -1,4 +1,4 @@
-import { Lock } from "./lock.js";
+import Lock from '../../util/lock.js';
 
 const REFRESH_INTERVAL_ON_OK = 60 * 60 * 1000;  // 1 hour
 const REFRESH_INTERVAL_ON_ERR = 20 * 60 * 1000;  // 20 minutes
@@ -6,7 +6,7 @@ const REFRESH_INTERVAL_ON_ERR = 20 * 60 * 1000;  // 20 minutes
 /**
  * In-memory cache of contest infos.
  */
-class Contests {
+export default class Contests {
   constructor(api) {
     this.api = api;
     this.contestMap = {};
@@ -58,5 +58,3 @@ class Contests {
     this.contestMap[contest.id] = contest;
   }
 }
-
-export { Contests };

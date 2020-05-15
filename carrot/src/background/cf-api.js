@@ -1,3 +1,7 @@
+/**
+ * Utility to fetch data from the Codeforces API.
+ */
+
 const API_URL_PREFIX = 'https://codeforces.com/api/';
 
 async function apiFetch(path, queryParams) {
@@ -20,29 +24,29 @@ async function apiFetch(path, queryParams) {
   throw new Error(json.comment);
 }
 
-const contest = {};
-contest.list = async function(gym) {
-  return await apiFetch('contest.list', { gym: gym });
-}
+export const contest = {
+  async list(gym) {
+    return await apiFetch('contest.list', { gym: gym });
+  },
 
-contest.standings = async function(contestId, from, count, handles, room, showUnofficial) {
-  return await apiFetch('contest.standings', {
-    contestId: contestId,
-    from: from,
-    count: count,
-    handles: handles && handles.length ? handles.join(';') : undefined,
-    room: room,
-    showUnofficial: showUnofficial
-  });
+  async standings(contestId, from, count, handles, room, showUnofficial) {
+    return await apiFetch('contest.standings', {
+      contestId: contestId,
+      from: from,
+      count: count,
+      handles: handles && handles.length ? handles.join(';') : undefined,
+      room: room,
+      showUnofficial: showUnofficial,
+    });
+  },
+
+  async ratingChanges(contestId) {
+    return await apiFetch('contest.ratingChanges', { contestId: contestId });
+  },
 };
 
-contest.ratingChanges = async function(contestId) {
-  return await apiFetch('contest.ratingChanges', { contestId: contestId });
+export const user = {
+  async ratedList(activeOnly) {
+    return await apiFetch('user.ratedList', { activeOnly: activeOnly });
+  },
 };
-
-const user = {};
-user.ratedList = async function(activeOnly) {
-  return await apiFetch('user.ratedList', { activeOnly: activeOnly });
-};
-
-export { contest, user };

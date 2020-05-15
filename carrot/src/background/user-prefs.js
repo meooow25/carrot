@@ -1,4 +1,7 @@
-class UserPrefs {
+/**
+ * Convenience wrapper for user preferences.
+ */
+export default class UserPrefs {
   constructor(enablePredictDeltas, enableFinalDeltas, enablePrefetchRatings) {
     this.enablePredictDeltas = enablePredictDeltas;
     this.enableFinalDeltas = enableFinalDeltas;
@@ -30,5 +33,3 @@ class UserPrefs {
     }
   }
 }
-
-export { UserPrefs };
