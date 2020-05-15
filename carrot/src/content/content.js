@@ -83,7 +83,7 @@ function makePredictedRankUpSpan(rank, deltaReqForRankUp, nextRank) {
 function makeDeltaHeaderCell(deltaColTitle) {
   const cell = document.createElement('th');
   cell.classList.add('top');
-  cell.style.width = '5em';
+  cell.style.width = '4.5em';
   {
     const span = document.createElement('span');
     span.textContent = Unicode.GREEK_CAPITAL_DELTA;
@@ -174,12 +174,12 @@ function updateStandings(resp) {
   switch (resp.type) {
     case 'FINAL':
       deltaColTitle = 'Final rating change';
-      rankUpColWidth = '7em';
+      rankUpColWidth = '6.5em';
       rankUpColTitle = 'Rank change';
       break;
     case 'PREDICTED':
       deltaColTitle = 'Predicted rating change';
-      rankUpColWidth = '8em';
+      rankUpColWidth = '7.5em';
       rankUpColTitle = 'Rating change for rank up';
       break;
     default:
