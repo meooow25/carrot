@@ -16,6 +16,15 @@ USAGE='Usage: [-f|--firefox] [-c|--chrome] [-z|--zip]
   At least one of -f or -c must be present.
   -f must be accompanied by -z.'
 
+shopt -s extglob
+
+copy_carrot() {
+  local copy_dir="$1"
+  mkdir -p "${copy_dir}/carrot"
+
+  # Copy everything except the tests.
+  cp -r carrot/!(tests) "${copy_dir}/carrot"
+}
 
 jq_manifest_replace() {
   local jq_command="$1"
@@ -33,8 +42,7 @@ pack_firefox() {
   mkdir -p "${release_dir}"
   printf "Packing ${release_dir}/${firefox_zip}..."
 
-  mkdir -p "${copy_dir}"
-  cp -r carrot "${copy_dir}"
+  copy_carrot "${copy_dir}"
   cd "${copy_dir}/carrot"
 
   # Remove browser_specific_settings from manifest.
@@ -63,8 +71,7 @@ pack_chrome() {
     printf "Setting up ${copy_dir}/carrot..."
   fi
 
-  mkdir -p "${copy_dir}"
-  cp -r carrot "${copy_dir}"
+  copy_carrot "${copy_dir}"
   cd "${copy_dir}"
 
   # Download the polyfill.
