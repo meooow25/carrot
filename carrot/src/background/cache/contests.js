@@ -1,4 +1,4 @@
-import { Lock } from '/src/util/lock.js';
+import { Lock } from '../../util/lock.js';
 
 const REFRESH_INTERVAL_ON_OK = 60 * 60 * 1000;  // 1 hour
 const REFRESH_INTERVAL_ON_ERR = 20 * 60 * 1000;  // 20 minutes

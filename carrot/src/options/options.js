@@ -1,4 +1,4 @@
-import * as settings from '/src/util/settings.js';
+import * as settings from '../util/settings.js';
 
 async function setup() {
   const predict = document.querySelector('#enable-predict-deltas');
