@@ -1,6 +1,5 @@
-import { LOCAL } from '/src/util/storage-wrapper.js';
-import * as settings from '/src/util/settings.js';
-
+import { LOCAL } from '../util/storage-wrapper.js';
+import * as settings from '../util/settings.js';
 import { Contests } from './cache/contests.js';
 import { RatingChanges } from './cache/rating-changes.js';
 import { Ratings } from './cache/ratings.js';
@@ -9,6 +8,8 @@ import { Contestant, PredictResult, predict } from './predict.js';
 import { PredictResponse } from './predict-response.js';
 import { UserPrefs } from './user-prefs.js';
 import * as api from './cf-api.js';
+
+const DEBUG_FORCE_PREDICT = false;
 
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
@@ -83,7 +84,7 @@ async function calcDeltas(contestId) {
   }
 
   // If the contest is old, get rating changes and don't try to predict.
-  if (CONTESTS.hasCached(contestId)) {
+  if (!DEBUG_FORCE_PREDICT && CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.get(contestId);
     checkRatedByName(contest.name);
     if (isOldContest(contest)) {
@@ -106,7 +107,7 @@ async function calcDeltas(contestId) {
   checkRatedByName(contest.name);
   checkRatedByTeam(rows);
 
-  if (contest.phase == 'FINISHED') {
+  if (!DEBUG_FORCE_PREDICT && contest.phase == 'FINISHED') {
     try {
       const deltas = await getFinalDeltas(contestId);
       prefs.checkFinalDeltasEnabled();
