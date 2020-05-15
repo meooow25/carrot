@@ -1,3 +1,6 @@
+/**
+ * Represents complex numbers.
+ */
 class Complex {
   constructor(re = 0, im = 0) {
     this.re = re;
@@ -6,16 +9,20 @@ class Complex {
   conj() { return new Complex(this.re, -this.im); }
   add(x) { return new Complex(this.re + x.re, this.im + x.im); }
   sub(x) { return new Complex(this.re - x.re, this.im - x.im); }
-  mul(x) {
-    return x instanceof Complex ?
-      new Complex(this.re * x.re - this.im * x.im, this.re * x.im + this.im * x.re) :
-      new Complex(this.re * x, this.im * x);
-  }
-  div(x) { return new Complex(this.re / x, this.im / x); }
+  mul(x) { return new Complex(this.re * x.re - this.im * x.im, this.re * x.im + this.im * x.re) }
 }
 
 Complex.I = new Complex(0, 1);
 
+/**
+ * Performs convolution of real sequences using Cooley-Tukey FFT in O(n log n).
+ * 
+ * >> const fftConv = new FFTConv(8);  // Initialized with n = 8
+ * >> const a = [0.125, 0.25, 0.5];
+ * >> const b = [4, 3, 2, 1];
+ * >> const res = fftConv.convolve(a, b);  // a.length + b.length - 1 must be <= n
+ * >> // expected result [0.5, 1.375, 3, 2.125, 1.25, 0.5]
+ */
 class FFTConv {
   constructor(n) {
     let k = 1;
@@ -23,23 +30,21 @@ class FFTConv {
       k++;
     }
     this.n = 1 << k;
-    this.w = [];
-    this.invw = [];
+    this.w = new Array(this.n >> 1);
     const ang = 2 * Math.PI / this.n;
-    const n2 = this.n >> 1;
-    for (let i = 0; i < n2; i++) {
-      this.w.push(new Complex(Math.cos(i * ang), Math.sin(i * ang)))
-      this.invw.push(this.w[i].conj());
+    for (let i = 0; i < this.w.length; i++) {
+      this.w[i] = new Complex(Math.cos(i * ang), Math.sin(i * ang));
     }
-    this.rev = [0];
+    this.rev = new Array(this.n);
+    this.rev[0] = 0;
     for (let i = 1; i < this.n; i++) {
-      this.rev.push(this.rev[i >> 1] >> 1 | ((i & 1) << (k - 1)));
+      this.rev[i] = this.rev[i >> 1] >> 1 | ((i & 1) << (k - 1));
     }
   }
 
-  transform(a, inv = false) {
+  transform(a) {
     if (a.length != this.n) {
-      throw new Error('Length must be n');
+      throw new Error(`a.length is ${a.length}, expected ${this.n}`);
     }
 
     for (let i = 1; i < this.n; i++) {
@@ -50,31 +55,34 @@ class FFTConv {
       }
     }
 
-    const twiddle = inv ? this.invw : this.w;
     for (let len = 2; len <= this.n; len <<= 1) {
       const half = len >> 1;
       const diff = this.n / len;
       for (let i = 0; i < this.n; i += len) {
         let pw = 0;
         for (let j = i; j < i + half; j++) {
-          const v = a[j + half].mul(twiddle[pw]);
+          const v = a[j + half].mul(this.w[pw]);
           a[j + half] = a[j].sub(v);
           a[j] = a[j].add(v);
           pw += diff;
         }
       }
     }
-
-    if (inv) {
-      for (let i = 0; i < this.n; i++) {
-        a[i] = a[i].div(this.n);
-      }
-    }
   }
 
   convolve(a, b) {
-    let c = [];
-    for (let i = 0; i < this.n; i++) {
+    if (a.length == 0 || b.length == 0) {
+      return [];
+    }
+    const n = this.n;
+    const resLen = a.length + b.length - 1;
+    if (resLen > n) {
+      throw new Error(
+        `a.length + b.length - 1 is ${a.length} + ${b.length} - 1 = ${resLen}, ` +
+        `expected <= ${n}`);
+    }
+    let c = new Array(n);
+    for (let i = 0; i < n; i++) {
       c[i] = new Complex();
     }
     for (let i = 0; i < a.length; i++) {
@@ -84,18 +92,23 @@ class FFTConv {
       c[i].im = b[i];
     }
     this.transform(c);
-    let tmpa = c[0].add(c[0].conj()).div(2);
-    let tmpb = c[0].sub(c[0].conj()).div(-2).mul(Complex.I);
-    let res = [tmpa.mul(tmpb)];
-    for (let i = 1; i < this.n; i++) {
-      tmpa = c[i].add(c[this.n - i].conj()).div(2);
-      tmpb = c[i].sub(c[this.n - i].conj()).div(-2).mul(Complex.I);
-      res.push(tmpa.mul(tmpb));
+    let res = new Array(n);
+    let tmpa = c[0].add(c[0].conj());
+    let tmpb = c[0].conj().sub(c[0]).mul(Complex.I);
+    res[0] = tmpa.mul(tmpb);
+    for (let i = 1; i < n; i++) {
+      tmpa = c[i].add(c[n - i].conj());
+      tmpb = c[n - i].conj().sub(c[i]).mul(Complex.I);
+      res[i] = tmpa.mul(tmpb);
     }
-    this.transform(res, true);
-    for (let i = 0; i < this.n; i++) {
-      res[i] = res[i].re;
+    this.transform(res);
+    res[0] = res[0].re / (4 * n);
+    for (let i = 1, j = n - 1; i <= j; i++, j--) {
+      const tmp = res[i].re;
+      res[i] = res[j].re / (4 * n);
+      res[j] = tmp / (4 * n);
     }
+    res.splice(resLen);
     return res;
   }
 }
