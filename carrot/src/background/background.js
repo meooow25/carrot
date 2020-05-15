@@ -1,12 +1,12 @@
 import { LOCAL } from '../util/storage-wrapper.js';
 import * as settings from '../util/settings.js';
-import { Contests } from './cache/contests.js';
-import { RatingChanges } from './cache/rating-changes.js';
-import { Ratings } from './cache/ratings.js';
-import { TopLevelCache } from './cache/top-level-cache.js';
-import { Contestant, PredictResult, predict } from './predict.js';
-import { PredictResponse } from './predict-response.js';
-import { UserPrefs } from './user-prefs.js';
+import Contests from './cache/contests.js';
+import RatingChanges from './cache/rating-changes.js';
+import Ratings from './cache/ratings.js';
+import TopLevelCache from './cache/top-level-cache.js';
+import predict, { Contestant, PredictResult } from './predict.js';
+import PredictResponse from './predict-response.js';
+import UserPrefs from './user-prefs.js';
 import * as api from './cf-api.js';
 
 const DEBUG_FORCE_PREDICT = false;

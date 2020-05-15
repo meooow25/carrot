@@ -1,3 +1,7 @@
+/**
+ * Utility to fetch data from the Codeforces API.
+ */
+
 const API_URL_PREFIX = 'https://codeforces.com/api/';
 
 async function apiFetch(path, queryParams) {
@@ -20,7 +24,7 @@ async function apiFetch(path, queryParams) {
   throw new Error(json.comment);
 }
 
-const contest = {
+export const contest = {
   async list(gym) {
     return await apiFetch('contest.list', { gym: gym });
   },
@@ -41,10 +45,8 @@ const contest = {
   },
 };
 
-const user = {
+export const user = {
   async ratedList(activeOnly) {
     return await apiFetch('user.ratedList', { activeOnly: activeOnly });
   },
 };
-
-export { contest, user };

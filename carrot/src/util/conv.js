@@ -23,7 +23,7 @@ Complex.I = new Complex(0, 1);
  * >> const res = fftConv.convolve(a, b);  // a.length + b.length - 1 must be <= n
  * >> // expected result [0.5, 1.375, 3, 2.125, 1.25, 0.5]
  */
-class FFTConv {
+export default class FFTConv {
   constructor(n) {
     let k = 1;
     while ((1 << k) < n) {
@@ -112,5 +112,3 @@ class FFTConv {
     return res;
   }
 }
-
-export { FFTConv };

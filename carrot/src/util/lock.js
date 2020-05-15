@@ -1,7 +1,7 @@
 /**
  * A lock for async code.
  */
-class Lock {
+export default class Lock {
   constructor() {
     this.queue = [];
     this.locked = false;
@@ -34,5 +34,3 @@ class Lock {
     }
   }
 }
-
-export { Lock };

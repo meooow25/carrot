@@ -5,7 +5,7 @@ const TIMEOUT = 30 * 1000;  // 30 seconds
  * Useful if the user repeatedly reloads a tab or opens multiple tabs to the same ranklist in a
  * short period of time, the same predictions will be sent to all.
  */
-class TopLevelCache {
+export default class TopLevelCache {
   constructor() {
     this.map = {};
   }
@@ -26,5 +26,3 @@ class TopLevelCache {
     return this.map[contestId];
   }
 }
-
-export { TopLevelCache };

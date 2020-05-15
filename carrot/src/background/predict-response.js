@@ -1,4 +1,4 @@
-import { Rank } from './rank.js';
+import Rank from './rank.js';
 
 class PredictResponseRow {
   constructor(delta, rank, newRank, deltaReqForRankUp, nextRank) {
@@ -14,7 +14,7 @@ class PredictResponseRow {
   }
 }
 
-class PredictResponse {
+export default class PredictResponse {
   constructor(predictResults, type, fetchTime) {
     PredictResponse.assertTypeOk(type);
     this.rowMap = {};
@@ -59,4 +59,3 @@ PredictResponse.TYPE_PREDICTED = 'PREDICTED';
 PredictResponse.TYPE_FINAL = 'FINAL';
 PredictResponse.TYPES = [PredictResponse.TYPE_PREDICTED, PredictResponse.TYPE_FINAL];
 
-export { PredictResponse };

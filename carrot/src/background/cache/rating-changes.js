@@ -3,7 +3,7 @@ const MAX_CONTESTS = 15;
 /**
  * In memory cache of rating changes that holds rating changes for at most MAX_CONTESTS contests.
  */
-class RatingChanges {
+export default class RatingChanges {
   constructor(api) {
     this.api = api;
     this.contestIds = [];
@@ -38,5 +38,3 @@ class RatingChanges {
     }
   }
 }
-
-export { RatingChanges };

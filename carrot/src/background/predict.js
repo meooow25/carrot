@@ -1,4 +1,4 @@
-import { FFTConv } from '../util/conv.js';
+import FFTConv from '../util/conv.js';
 
 /**
  * Rating calculation code adapted from TLE at
@@ -12,7 +12,7 @@ import { FFTConv } from '../util/conv.js';
 const PRINT_PERFORMANCE = false;
 const DEFAULT_RATING = 1500;
 
-class Contestant {
+export class Contestant {
   constructor(party, points, penalty, rating) {
     this.party = party;
     this.points = points;
@@ -24,7 +24,7 @@ class Contestant {
   }
 }
 
-class PredictResult {
+export class PredictResult {
   constructor(handle, rating, delta) {
     this.handle = handle;
     this.rating = rating;
@@ -150,9 +150,7 @@ class RatingCalculator {
   }
 }
 
-function predict(contestants) {
+export default function predict(contestants) {
   new RatingCalculator(contestants).calculate();
   return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta));
 }
-
-export { Contestant, PredictResult, predict };

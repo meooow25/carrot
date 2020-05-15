@@ -1,3 +1,6 @@
+/**
+ * Convenience wrapper around browser.storage.
+ */
 class StorageWrapper {
   constructor(storageName) {
     this.storageName = storageName;
@@ -14,7 +17,5 @@ class StorageWrapper {
   }
 }
 
-const LOCAL = new StorageWrapper('local');
-const SYNC = new StorageWrapper('sync');
-
-export { LOCAL, SYNC };
+export const LOCAL = new StorageWrapper('local');
+export const SYNC = new StorageWrapper('sync');
