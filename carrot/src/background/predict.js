@@ -10,7 +10,7 @@ import FFTConv from '../util/conv.js';
  */
 
 const PRINT_PERFORMANCE = false;
-const DEFAULT_RATING = 1500;
+const DEFAULT_RATING = 1400;
 
 export class Contestant {
   constructor(party, points, penalty, rating) {

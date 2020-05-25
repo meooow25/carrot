@@ -35,9 +35,9 @@ export default class PredictResponse {
           break;
         case PredictResponse.TYPE_FINAL:
           // For an unrated user, user info has missing rating but if the user participates, the
-          // oldRating on the ratingChange object is set as 1500. So, for FINAL, at the moment
-          // rating = effectiveRating always, but keeping the code which works for unrated too, as
-          // things should be.
+          // oldRating on the ratingChange object is set as the default starting value. So, for
+          // FINAL, at the moment rating = effectiveRating always, but keeping the code which works
+          // for unrated too, as things should be.
           rank = Rank.forRating(result.rating);
           newRank = Rank.forRating(result.effectiveRating + result.delta);
           break;
