@@ -1,5 +1,13 @@
+import * as colors from 'https://deno.land/std/fmt/colors.ts';
 import * as api from '../src/background/cf-api.js';
 import predict, { Contestant } from '../src/background/predict.js';
+
+/**
+ * Compares actual vs calculated rating changes for a given finished rated contest.
+ * Matches upto Educational round 87 (1354). New rating system was imposed after that.
+ * 
+ * $ deno run --allow-net compare.ts <contest-id>
+ */
 
 async function main() {
   const contestId = Deno.args[0];
@@ -42,11 +50,16 @@ async function main() {
     }
   }
   if (diffs.length) {
-    console.error(`Delta mismatch for ${diffs.length} contestants:`);
-    console.error('[handle, old rating, actual delta, calculated delta]');
-    console.error(diffs);
+    console.error(colors.red(`Delta mismatch for ${diffs.length} contestants:`));
+    console.error(colors.red('[handle, old rating, actual delta, calculated delta]'));
+    for (const row of diffs.slice(0, 5)) {
+      console.error(colors.red('[' + row.join(', ') + ']'));
+    }
+    if (diffs.length > 5) {
+      console.log(colors.red(`...and ${diffs.length - 5} more`));
+    }
   } else {
-    console.info('OK all match');
+    console.info(colors.green('OK all match'));
   }
 }
 
