@@ -19,13 +19,13 @@ function predictedDeltas(data: TestDataRow[]): object {
 
 Deno.test('predict_ok', (): void => {
   const data: TestDataRow[] = [
-    ['bigbrain', 4000, 10, 3000, -237],
-    ['smartguy', 2500, 50, 2400, -175],
-    ['ordinaryguy', 1500, 80, 1800, -35],
-    ['brick', -100, 300, 500, -50],
-    ['alt', 5000, 0, undefined, 514],
-    ['luckyguy', 2500, 40, 1800, 121],
-    ['unluckyguy', 800, 40, 2000, -145],
+    ['bigbrain', 4000, 10, 3000, -241],
+    ['smartguy', 2500, 50, 2400, -181],
+    ['ordinaryguy', 1500, 80, 1800, -48],
+    ['brick', -100, 300, 500, -54],
+    ['alt', 5000, 0, undefined, 553],
+    ['luckyguy', 2500, 40, 1800, 118],
+    ['unluckyguy', 800, 40, 2000, -160],
   ];
 
   assertEquals(predictedDeltas(data), expectedDeltas(data));
