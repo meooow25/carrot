@@ -1,7 +1,7 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 import { AssertionError } from 'https://deno.land/std/testing/asserts.ts';
 import { red, green, white, gray, bold } from 'https://deno.land/std/fmt/colors.ts';
-import diff, { DiffType, DiffResult } from 'https://deno.land/std/testing/diff.ts';
+import { diff, DiffType, DiffResult } from 'https://deno.land/std/testing/_diff.ts';
 
 // These are internal functions from https://deno.land/std/testing/asserts.ts.
 // We use these because we add a new assert function that allows an error margin
