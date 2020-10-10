@@ -1,7 +1,7 @@
 import { LOCAL } from '../util/storage-wrapper.js';
 import * as settings from '../util/settings.js';
 import Contests from './cache/contests.js';
-import RatingChanges from './cache/rating-changes.js';
+import { ContestsComplete } from './cache/contests-complete.js';
 import Ratings from './cache/ratings.js';
 import TopLevelCache from './cache/top-level-cache.js';
 import predict, { Contestant, PredictResult } from './predict.js';
@@ -13,11 +13,10 @@ const DEBUG_FORCE_PREDICT = false;
 
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
-const RATING_PENDING_MAX_DAYS = 3;
 
 const CONTESTS = new Contests(api);
-const RATING_CHANGES = new RatingChanges(api);
 const RATINGS = new Ratings(api, LOCAL);
+const CONTESTS_COMPLETE = new ContestsComplete(api);
 const TOP_LEVEL_CACHE = new TopLevelCache();
 
 browser.runtime.onMessage.addListener(listener);
@@ -59,12 +58,6 @@ function checkRatedByTeam(rows) {
   }
 }
 
-function isOldContest(contest) {
-  const daysSinceContestEnd =
-    (Date.now() / 1000 - contest.startTimeSeconds - contest.durationSeconds) / (60 * 60 * 24);
-  return daysSinceContestEnd > RATING_PENDING_MAX_DAYS;
-}
-
 async function getDeltas(contestId) {
   if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
     const deltasPromise = calcDeltas(contestId);
@@ -77,87 +70,72 @@ async function calcDeltas(contestId) {
   const prefs = await UserPrefs.create(settings);
   prefs.checkAnyDeltasEnabled();
 
-  // If rating changes are cached, return them.
-  if (RATING_CHANGES.hasCached(contestId)) {
-    prefs.checkFinalDeltasEnabled();
-    return await getFinalDeltas(contestId);
-  }
-
-  // If the contest is old, get rating changes and don't try to predict.
-  if (!DEBUG_FORCE_PREDICT && CONTESTS.hasCached(contestId)) {
+  if (CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.get(contestId);
     checkRatedByName(contest.name);
-    if (isOldContest(contest)) {
-      prefs.checkFinalDeltasEnabled();
-      return await getFinalDeltas(contestId);
-    }
   }
 
-  // The contest
-  // 1. does not have rating changes cached, and
-  // 2. either
-  //     a. does not exist in the contest cache, or
-  //     b. exists in the contest cache but is not an old contest.
-  //
-  // Try to get rating changes if the contest is finished else predict.
-
-  const { contest, problems_, rows } = await api.contest.standings(contestId);
-  const standingsFetchTime = Date.now();
-  CONTESTS.update(contest);
-  checkRatedByName(contest.name);
-  checkRatedByTeam(rows);
-
-  if (!DEBUG_FORCE_PREDICT && contest.phase == 'FINISHED') {
-    try {
-      const deltas = await getFinalDeltas(contestId);
-      prefs.checkFinalDeltasEnabled();
-      return deltas;
-    } catch (er) {
-      if (er.message == 'UNRATED_CONTEST') {
-        // Not an old contest but missing rating changes, proceed to predict.
-      } else {
-        throw er;
-      }
-    }
+  const contest = await CONTESTS_COMPLETE.fetch(contestId);
+  CONTESTS.update(contest.contest);
+  if (contest.isDefinitelyNotRated) {
+    throw new Error('UNRATED_CONTEST');
   }
+  checkRatedByName(contest.contest.name);
+  checkRatedByTeam(contest.rows);
+
+  if (!DEBUG_FORCE_PREDICT && contest.isFinished) {
+    prefs.checkFinalDeltasEnabled();
+    return getFinal(contest);
+  }
+
   prefs.checkPredictDeltasEnabled();
-  return await getPredictedDeltas(contest, rows, standingsFetchTime);
+  return await getPredicted(contest);
 }
 
-async function getFinalDeltas(contestId) {
-  try {
-    const ratingChanges = await RATING_CHANGES.fetch(contestId);
-    const fetchTime = Date.now();
-    if (ratingChanges && ratingChanges.length) {
-      const predictResults = [];
-      for (const change of ratingChanges) {
-        predictResults.push(
-          new PredictResult(change.handle, change.oldRating, change.newRating - change.oldRating));
-      }
-      return new PredictResponse(predictResults, PredictResponse.TYPE_FINAL, fetchTime);
-    }
-  } catch (er) {
-    console.error('Error fetching deltas: ' + er);
+function predictForRows(rows, ratingBeforeContest) {
+  const contestants = rows.map((row) => {
+    const handle = row.party.members[0].handle;
+    return new Contestant(handle, row.points, row.penalty, ratingBeforeContest[handle]);
+  });
+  return predict(contestants, true);
+}
+
+function getFinal(contest) {
+  // Calculate and save the performances on the contest object if not already saved.
+  if (contest.performances == null) {
+    const ratingBeforeContest =
+        Object.fromEntries(contest.ratingChanges.map((c) => [c.handle, c.oldRating]));
+    const rows = contest.rows.filter((row) => {
+      const handle = row.party.members[0].handle;
+      return ratingBeforeContest[handle] != null;
+    });
+    const predictResultsForPerf = predictForRows(rows, ratingBeforeContest);
+    contest.performances = new Map(predictResultsForPerf.map((r) => [r.handle, r.performance]));
   }
-  throw new Error('UNRATED_CONTEST');
+
+  const predictResults = [];
+  for (const change of contest.ratingChanges) {
+    predictResults.push(
+        new PredictResult(
+            change.handle, change.oldRating, change.newRating - change.oldRating,
+            contest.performances.get(change.handle)));
+  }
+  return new PredictResponse(predictResults, PredictResponse.TYPE_FINAL, contest.fetchTime);
 }
 
-async function getPredictedDeltas(contest, rows, fetchTime) {
-  const ratingMap = await RATINGS.fetchCurrentRatings(contest.startTimeSeconds * 1000);
-  const isEduRound = contest.name.toLowerCase().includes('educational');
+async function getPredicted(contest) {
+  const ratingMap = await RATINGS.fetchCurrentRatings(contest.contest.startTimeSeconds * 1000);
+  const isEduRound = contest.contest.name.toLowerCase().includes('educational');
+  let rows = contest.rows;
   if (isEduRound) {
     // For educational rounds, standings include contestants for whom the contest is not rated.
-    rows = rows.filter((row) => {
+    rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
       return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
     });
   }
-  const contestants = rows.map((row) => {
-    const handle = row.party.members[0].handle;
-    return new Contestant(handle, row.points, row.penalty, ratingMap[handle]);
-  });
-  const predictResults = predict(contestants);
-  return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED, fetchTime);
+  const predictResults = predictForRows(rows, ratingMap);
+  return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED, contest.fetchTime);
 }
 
 // Prediction related code ends.

@@ -1,9 +1,10 @@
 import Rank from './rank.js';
 
 class PredictResponseRow {
-  constructor(delta, rank, newRank, deltaReqForRankUp, nextRank) {
+  constructor(delta, rank, performance, newRank, deltaReqForRankUp, nextRank) {
     this.delta = delta;
     this.rank = rank;
+    this.performance = performance;
 
     // For FINAL
     this.newRank = newRank;
@@ -44,8 +45,13 @@ export default class PredictResponse {
         default:
           throw new Error('Unknown prediction type: ' + this.type);
       }
+      const performance = {
+        value: result.performance == Infinity ? 'Infinity' : result.performance,
+        colorClass: Rank.forRating(result.performance).colorClass,
+      }
       this.rowMap[result.handle] =
-        new PredictResponseRow(result.delta, rank, newRank, deltaReqForRankUp, nextRank);
+          new PredictResponseRow(
+              result.delta, rank, performance, newRank, deltaReqForRankUp, nextRank);
     }
   }
 
@@ -58,4 +64,3 @@ export default class PredictResponse {
 PredictResponse.TYPE_PREDICTED = 'PREDICTED';
 PredictResponse.TYPE_FINAL = 'FINAL';
 PredictResponse.TYPES = [PredictResponse.TYPE_PREDICTED, PredictResponse.TYPE_FINAL];
-

@@ -4,6 +4,8 @@ const PREDICT_TEXT_ID = 'predict_text';
 const Unicode = {
   BLACK_CURVED_RIGHTWARDS_AND_UPWARDS_ARROW: '\u2BAD',
   GREEK_CAPITAL_DELTA: '\u0394',
+  GREEK_CAPITAL_PI: '\u03A0',
+  INFINITY: '\u221E',
   SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL: '\u2B5C',
   BACKSLANTED_SOUTH_ARROW_WITH_HORIZONTAL_TAIL: '\u2B5D',
 };
@@ -17,6 +19,21 @@ function makeGreySpan(text, title) {
     span.title = title;
   }
   span.classList.add('small');
+  return span;
+}
+
+function makePerformanceSpan(performance) {
+  const span = document.createElement('span');
+  if (performance.value == 'Infinity') {
+    span.textContent = Unicode.INFINITY;
+    // ::first-letter does not match the inf symbol on Firefox, just don't set the LGM color class
+    // and it defaults to black.
+  } else {
+    span.textContent = performance.value;
+    span.classList.add(performance.colorClass);
+  }
+  span.style.fontWeight = 'bold';
+  span.style.display = 'inline-block';  // Allows CSS black ::first-letter for LGM
   return span;
 }
 
@@ -80,6 +97,19 @@ function makePredictedRankUpSpan(rank, deltaReqForRankUp, nextRank) {
   return span;
 }
 
+function makePerfHeaderCell() {
+  const cell = document.createElement('th');
+  cell.classList.add('top');
+  cell.style.width = '4.5em';
+  {
+    const span = document.createElement('span');
+    span.textContent = Unicode.GREEK_CAPITAL_PI;
+    span.title = 'Performance';
+    cell.appendChild(span);
+  }
+  return cell;
+}
+
 function makeDeltaHeaderCell(deltaColTitle) {
   const cell = document.createElement('th');
   cell.classList.add('top');
@@ -113,36 +143,26 @@ function makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle) {
   return cell;
 }
 
-function makeDeltaFooterCell() {
+function makeDataCell(bottom=false, right=false) {
   const cell = document.createElement('td');
-  cell.classList.add('bottom');
+  if (bottom) {
+    cell.classList.add('bottom');
+  }
+  if (right) {
+    cell.classList.add('right');
+  }
   return cell;
 }
 
-function makeRankUpFooterCell() {
-  const cell = document.createElement('td');
-  cell.classList.add('bottom', 'right');
-  return cell;
-}
-
-function makeDeltaDataCell() {
-  const cell = document.createElement('td');
-  return cell;
-}
-
-function makeRankUpDataCell() {
-  const cell = document.createElement('td');
-  cell.classList.add('right');
-  return cell;
-}
-
-function populateDeltaAndRankUpCells(row, type, rankUpTint, deltaCell, rankUpCell) {
+function populateCells(row, type, rankUpTint, perfCell, deltaCell, rankUpCell) {
   if (row == null) {
+    perfCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
     deltaCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
     rankUpCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
     return;
   }
 
+  perfCell.appendChild(makePerformanceSpan(row.performance));
   deltaCell.appendChild(makeDeltaSpan(row.delta));
   switch (type) {
     case 'FINAL':
@@ -190,16 +210,19 @@ function updateStandings(resp) {
   for (const [idx, tableRow] of rows.entries()) {
     tableRow.querySelector('th:last-child, td:last-child').classList.remove('right');
 
-    let deltaCell, rankUpCell;
+    let perfCell, deltaCell, rankUpCell;
     if (idx == 0) {
+      perfCell = makePerfHeaderCell();
       deltaCell = makeDeltaHeaderCell(deltaColTitle);
       rankUpCell = makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle);
     } else if (idx == rows.length - 1) {
-      deltaCell = makeDeltaFooterCell();
-      rankUpCell = makeDeltaFooterCell();
+      perfCell = makeDataCell(true);
+      deltaCell = makeDataCell(true);
+      rankUpCell = makeDataCell(true, true);
     } else {
-      deltaCell = makeDeltaDataCell();
-      rankUpCell = makeRankUpDataCell();
+      perfCell = makeDataCell();
+      deltaCell = makeDataCell();
+      rankUpCell = makeDataCell(false, true);
       const handle = tableRow.querySelector('td.contestant-cell').textContent.trim();
       let rankUpTint;
       if (tableRow.classList.contains('highlighted-row')) {
@@ -207,15 +230,16 @@ function updateStandings(resp) {
       } else {
         rankUpTint = [idx % 2 ? '#ebf8eb' : '#f2fff2', undefined];
       }
-      populateDeltaAndRankUpCells(
-        resp.rowMap[handle], resp.type, rankUpTint, deltaCell, rankUpCell);
+      populateCells(resp.rowMap[handle], resp.type, rankUpTint, perfCell, deltaCell, rankUpCell);
     }
 
     if (idx % 2) {
+      perfCell.classList.add('dark');
       deltaCell.classList.add('dark');
       rankUpCell.classList.add('dark');
     }
 
+    tableRow.appendChild(perfCell);
     tableRow.appendChild(deltaCell);
     tableRow.appendChild(rankUpCell);
   }
@@ -249,7 +273,7 @@ async function predict(contestId) {
   } catch (er) {
     switch (er.message) {
       case 'UNRATED_CONTEST':
-        console.info('Possibly unrated contest, not displaying delta column.');
+        console.info('Unrated contest, not displaying delta column.');
         break;
       case 'DISABLED':
         console.info('Deltas for this contest are disabled according to user settings.');

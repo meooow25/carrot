@@ -15,10 +15,11 @@ export default class Rank {
       return Rank.UNRATED;
     }
     for (const rank of Rank.RATED) {
-      if (rank.low <= rating && rating < rank.high) {
+      if (rating < rank.high) {
         return rank;
       }
     }
+    return Rank.RATED[Rank.RATED.length - 1];
   }
 }
 
