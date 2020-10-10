@@ -8,6 +8,9 @@ import binarySearch from '../util/binsearch.js'
  * https://codeforces.com/contest/1/submission/13861109.
  *
  * The algorithm uses convolution via FFT for fast calculation.
+ * 
+ * Calculation of performance, which is the rating at which delta is zero, written with the help
+ * of ffao (https://codeforces.com/profile/ffao).
  */
 
 const PRINT_PERFORMANCE = false;
@@ -159,10 +162,18 @@ class RatingCalculator {
   }
 
   calcPerfs() {
+    // This is not perfect, but close enough. The difference is caused by the adjustment value,
+    // which can change slightly when the rating of a single user, the user for whom we're
+    // calculating performance, varies.
+    // Tests on some selected contests show (this perf - true perf) lie in [0, 4].
     for (const c of this.contestants) {
-      c.performance = binarySearch(
-        MIN_RATING_LIMIT, MAX_RATING_LIMIT,
-        (assumedRating) => this.calcDelta(c, assumedRating) + this.adjustment <= 0);
+      if (c.rank == 1) {
+        c.performance = Infinity;  // Rank 1 always gains rating.
+      } else {
+        c.performance = binarySearch(
+            MIN_RATING_LIMIT, MAX_RATING_LIMIT,
+            (assumedRating) => this.calcDelta(c, assumedRating) + this.adjustment <= 0);
+      }
     }
   }
 }

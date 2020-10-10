@@ -68,9 +68,14 @@ async function verifyVsNaive(
     assertArrayContains(ALLOWED_DELTAS_AT_FAST_PERFS, [deltaAtFastPerf]);
     incCounter(deltasAtFastPerfs, deltaAtFastPerf);
 
-    const diff = fastPerf - perf;
-    assertArrayContains(ALLOWED_PERF_DIFFS, [diff]);
-    incCounter(perfDiffs, diff);
+    if (perf == 'Infinity') {
+      assertEquals(fastPerf, perf);
+      incCounter(perfDiffs, 0);
+    } else {
+      const diff = fastPerf - perf;
+      assertArrayContains(ALLOWED_PERF_DIFFS, [diff]);
+      incCounter(perfDiffs, diff);
+    }
 
     wg.done();
     progressBarInc();
@@ -88,7 +93,10 @@ async function verifyVsNaive(
   const perWorker = Math.ceil(contestants.length / NUM_WORKERS);
   for (let i = 0; i < contestants.length; i += perWorker) {
     const fastPerfsPiece = Object.fromEntries(
-        contestants.slice(i, i + perWorker).map((c) => [c.party, fastPerfs.get(c.party)]));
+        contestants.slice(i, i + perWorker).map((c) => {
+          const fastPerf = fastPerfs.get(c.party);
+          return [c.party, fastPerf == Infinity ? 'Infinity' : fastPerf];
+        }));
     const w = makeWorker();
     w.postMessage({
       contestants,
@@ -112,7 +120,7 @@ async function verifyVsNaive(
 
 async function testPerfs(data: RoundData): Promise<void> {
   const contestants = dataRowsToContestants(data.rows);
-  const results: PredictResult[] = predict(contestants.slice(), true);
+  const results: PredictResult[] = predict(contestants, true);
   const fastPerfs = new Map<string, number>(results.map((r) => [r.handle, r.performance]));
   await verifyVsNaive(contestants, fastPerfs);
 }

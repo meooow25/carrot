@@ -3,9 +3,8 @@ import binarySearch from '../src/util/binsearch.js'
 
 // @ts-ignore: DedicatedWorkerGlobalScope
 self.onmessage = (e: MessageEvent): void => {
-  const contestants: Contestant[]
-      = e.data.contestants.map((c: any) => new Contestant(c.party, c.points, c.penalty, c.rating));
-  const fastPerfs = e.data.fastPerfs;
+  const contestants: Contestant[] = e.data.contestants;
+  const fastPerfs: Record<string, number | 'Infinity'> = e.data.fastPerfs;
 
   function replace(handle: string, assumedRating: number) {
     return contestants.map(
@@ -22,20 +21,21 @@ self.onmessage = (e: MessageEvent): void => {
     if (fastPerfs[c.party] === undefined) {
       continue;
     }
-    const deltaAtFastPerf = calcDelta(c, fastPerf);
-    const perf = binarySearch(
-      MIN_RATING_LIMIT, MAX_RATING_LIMIT,
-      (assumedRating: number) => calcDelta(c, assumedRating) <= 0
-    )
-    const deltaAtPerf = calcDelta(c, perf);
+    const result: Record<string, any> = {
+      constestant: c,
+      fastPerf,
+      deltaAtFastPerf:
+          fastPerf == 'Infinity' ? c.rank == 1 ? 0 : '-Infinity' : calcDelta(c, fastPerf),
+      perf:
+          c.rank == 1 ?
+          'Infinity' :
+          binarySearch(
+              MIN_RATING_LIMIT, MAX_RATING_LIMIT,
+              (assumedRating: number) => calcDelta(c, assumedRating) <= 0),
+    };
+    result.deltaAtPerf = c.rank == 1 ? 0 : calcDelta(c, result.perf),
 
     // @ts-ignore: DedicatedWorkerGlobalScope
-    self.postMessage({
-      handle: c.party,
-      fastPerf,
-      deltaAtFastPerf,
-      perf,
-      deltaAtPerf,
-    });
+    self.postMessage(result);
   }
 };
