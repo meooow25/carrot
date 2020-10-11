@@ -30,7 +30,7 @@ async function main() {
     ratingChanges.map((r: any) => [r.handle, { old: r.oldRating, new: r.newRating }]));
 
   console.info('Fetching standings...');
-  let { contest_, problems_, rows } = await api.contest.standings(contestId);
+  let { rows } = await api.contest.standings(contestId);
   console.info('  Fetched ' + rows.length + ' rows');
   rows = rows.filter((row: any) => row.party.members[0].handle in rating);
   console.info('  ' + rows.length + ' rows retained from rating change list');
@@ -43,11 +43,14 @@ async function main() {
   const predictResults = predict(contestants);
 
   const diffs = [];
+  const diffCounter = new Map();
   for (const res of predictResults) {
     const actualDelta = rating[res.handle].new - rating[res.handle].old;
     if (res.delta != actualDelta) {
       diffs.push([res.handle, rating[res.handle].old, actualDelta, res.delta]);
     }
+    const diff = res.delta - actualDelta;
+    diffCounter.set(diff, (diffCounter.get(diff) ?? 0) + 1);
   }
   if (diffs.length) {
     console.error(colors.red(`Delta mismatch for ${diffs.length} contestants:`));
@@ -58,9 +61,14 @@ async function main() {
     if (diffs.length > 5) {
       console.log(colors.red(`...and ${diffs.length - 5} more`));
     }
+    console.log(colors.red('Difference counts:'));
+    const diffCounterSorted = new Map(Array.from(diffCounter.entries()).sort((a, b) => b[1] - a[1]));
+    console.log(diffCounterSorted);
   } else {
     console.info(colors.green('OK all match'));
   }
 }
 
-main();
+if (import.meta.main) {
+  main();
+}
