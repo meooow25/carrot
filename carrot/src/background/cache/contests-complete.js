@@ -9,7 +9,7 @@ export class Contest {
     this.ratingChanges = ratingChanges;
     this.fetchTime = fetchTime;
     this.isRated = isRated;
-    this.performances = undefined;  // To be populated by someone who calculates the performances.
+    this.performances = null;  // To be populated by someone who calculates the performances.
   }
 }
 
@@ -49,7 +49,7 @@ export class ContestsComplete {
     const { contest, problems, rows } = await this.api.contest.standings(contestId);
     let ratingChanges;
     let isRated = Contest.IsRated.LIKELY;
-    if (contest.phase == 'FINISHED') {
+    if (contest.phase === 'FINISHED') {
       try {
         ratingChanges = await this.api.contest.ratingChanges(contestId);
         if (ratingChanges && ratingChanges.length > 0) {
@@ -61,10 +61,10 @@ export class ContestsComplete {
         }
       }
     }
-    if (isRated == Contest.IsRated.LIKELY && isOldContest(contest)) {
+    if (isRated === Contest.IsRated.LIKELY && isOldContest(contest)) {
       isRated = Contest.IsRated.NO;
     }
-    const isFinished = isRated == Contest.IsRated.NO || isRated == Contest.IsRated.YES;
+    const isFinished = isRated === Contest.IsRated.NO || isRated === Contest.IsRated.YES;
 
     const c = new Contest(contest, problems, rows, ratingChanges, Date.now(), isRated);
     if (isFinished) {

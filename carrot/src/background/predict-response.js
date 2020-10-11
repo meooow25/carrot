@@ -46,7 +46,7 @@ export default class PredictResponse {
           throw new Error('Unknown prediction type: ' + this.type);
       }
       const performance = {
-        value: result.performance == Infinity ? 'Infinity' : result.performance,
+        value: result.performance === Infinity ? 'Infinity' : result.performance,
         colorClass: Rank.forRating(result.performance).colorClass,
       }
       this.rowMap[result.handle] =

@@ -71,7 +71,7 @@ export default class FFTConv {
   }
 
   convolve(a, b) {
-    if (a.length == 0 || b.length == 0) {
+    if (a.length === 0 || b.length === 0) {
       return [];
     }
     const n = this.n;

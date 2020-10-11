@@ -13,7 +13,7 @@ async function apiFetch(path, queryParams) {
   }
   const resp = await fetch(url);
   const json = await resp.json();
-  if (json.status == 'OK') {
+  if (json.status === 'OK') {
     return json.result;
   }
   throw new Error(json.comment);

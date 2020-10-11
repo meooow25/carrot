@@ -9,8 +9,8 @@ const ENABLE_FINAL_DELTAS = 'settings.enableFetchDeltas';
 const ENABLE_PREFETCH_RATINGS = 'settings.enablePrefetchRatings';
 
 function boolSetterGetter(key, defaultValue) {
-  return async (value) => {
-    if (value == null) {
+  return async (value = undefined) => {
+    if (value === undefined) {
       return await SYNC.get(key, !!defaultValue);
     }
     return await SYNC.set(key, !!value);

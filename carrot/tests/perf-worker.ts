@@ -8,12 +8,12 @@ self.onmessage = (e: MessageEvent): void => {
 
   function replace(handle: string, assumedRating: number) {
     return contestants.map(
-      (c) => c.party == handle ? new Contestant(handle, c.points, c.penalty, assumedRating) : c);
+      (c) => c.party === handle ? new Contestant(handle, c.points, c.penalty, assumedRating) : c);
   }
 
   function calcDelta(c: Contestant, assumedRating: number): number {
     const results: PredictResult[] = predict(replace(c.party, assumedRating));
-    return results.filter((r) => r.handle == c.party)[0].delta;
+    return results.filter((r) => r.handle === c.party)[0].delta;
   }
 
   for (const c of contestants) {
@@ -25,15 +25,15 @@ self.onmessage = (e: MessageEvent): void => {
       constestant: c,
       fastPerf,
       deltaAtFastPerf:
-          fastPerf == 'Infinity' ? c.rank == 1 ? 0 : '-Infinity' : calcDelta(c, fastPerf),
+          fastPerf === 'Infinity' ? c.rank === 1 ? 0 : '-Infinity' : calcDelta(c, fastPerf),
       perf:
-          c.rank == 1 ?
+          c.rank === 1 ?
           'Infinity' :
           binarySearch(
               MIN_RATING_LIMIT, MAX_RATING_LIMIT,
               (assumedRating: number) => calcDelta(c, assumedRating) <= 0),
     };
-    result.deltaAtPerf = c.rank == 1 ? 0 : calcDelta(c, result.perf),
+    result.deltaAtPerf = c.rank === 1 ? 0 : calcDelta(c, result.perf),
 
     // @ts-ignore: DedicatedWorkerGlobalScope
     self.postMessage(result);

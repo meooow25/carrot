@@ -78,11 +78,11 @@ async function calcDeltas(contestId) {
   const contest = await CONTESTS_COMPLETE.fetch(contestId);
   CONTESTS.update(contest.contest);
 
-  if (contest.isRated == Contest.IsRated.NO) {
+  if (contest.isRated === Contest.IsRated.NO) {
     throw new Error('UNRATED_CONTEST');
   }
 
-  if (!DEBUG_FORCE_PREDICT && contest.isRated == Contest.IsRated.YES) {
+  if (!DEBUG_FORCE_PREDICT && contest.isRated === Contest.IsRated.YES) {
     prefs.checkFinalDeltasEnabled();
     return getFinal(contest);
   }
@@ -104,7 +104,7 @@ function predictForRows(rows, ratingBeforeContest) {
 
 function getFinal(contest) {
   // Calculate and save the performances on the contest object if not already saved.
-  if (contest.performances == null) {
+  if (contest.performances === null) {
     const ratingBeforeContest =
         Object.fromEntries(contest.ratingChanges.map((c) => [c.handle, c.oldRating]));
     const rows = contest.rows.filter((row) => {
@@ -133,7 +133,7 @@ async function getPredicted(contest) {
     // For educational rounds, standings include contestants for whom the contest is not rated.
     rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
-      return ratingMap[handle] == null || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
+      return ratingMap[handle] === undefined || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
     });
   }
   const predictResults = predictForRows(rows, ratingMap);
@@ -160,7 +160,7 @@ function getNearestUpcomingRatedContestStartTime() {
     if (start < now || isUnratedByName(c.name)) {
       continue;
     }
-    if (nearest == null || start < nearest) {
+    if (nearest === null || start < nearest) {
       nearest = start;
     }
   }

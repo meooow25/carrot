@@ -22,7 +22,7 @@ export class Contestant {
     this.points = points;
     this.penalty = penalty;
     this.rating = rating;
-    this.effectiveRating = rating == null ? DEFAULT_RATING : rating;
+    this.effectiveRating = rating === null || rating === undefined ? DEFAULT_RATING : rating;
     this.rank = undefined;
     this.delta = undefined;
   }
@@ -37,7 +37,7 @@ export class PredictResult {
   }
 
   get effectiveRating() {
-    return this.rating == null ? DEFAULT_RATING : this.rating;
+    return this.rating === null || this.rating === undefined ? DEFAULT_RATING : this.rating;
   }
 }
 
@@ -167,7 +167,7 @@ class RatingCalculator {
     // calculating performance, varies.
     // Tests on some selected contests show (this perf - true perf) lie in [0, 4].
     for (const c of this.contestants) {
-      if (c.rank == 1) {
+      if (c.rank === 1) {
         c.performance = Infinity;  // Rank 1 always gains rating.
       } else {
         c.performance = binarySearch(
