@@ -23,8 +23,8 @@ export class Contestant {
     this.penalty = penalty;
     this.rating = rating;
     this.effectiveRating = rating === null || rating === undefined ? DEFAULT_RATING : rating;
-    this.rank = undefined;
-    this.delta = undefined;
+    this.rank = null;
+    this.delta = null;
   }
 }
 
@@ -59,8 +59,8 @@ const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 class RatingCalculator {
   constructor(contestants, calcPerfs = false) {
     this.contestants = contestants;
-    this.seed = undefined;
-    this.adjustment = undefined;
+    this.seed = null;
+    this.adjustment = null;
     this.doCalcPerfs = calcPerfs;
   }
 
