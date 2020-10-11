@@ -23,8 +23,8 @@ export class Contestant {
     this.penalty = penalty;
     this.rating = rating;
     this.effectiveRating = rating == null ? DEFAULT_RATING : rating;
-    this.rank = undefined;
-    this.delta = undefined;
+    this.rank = null;
+    this.delta = null;
   }
 }
 
@@ -57,10 +57,10 @@ for (let i = -RATING_RANGE_LEN; i <= RATING_RANGE_LEN; i++) {
 const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 
 class RatingCalculator {
-  constructor(contestants, calcPerfs=false) {
+  constructor(contestants, calcPerfs = false) {
     this.contestants = contestants;
-    this.seed = undefined;
-    this.adjustment = undefined;
+    this.seed = null;
+    this.adjustment = null;
     this.doCalcPerfs = calcPerfs;
   }
 
@@ -103,12 +103,12 @@ class RatingCalculator {
   }
 
   reassignRanks() {
-    this.contestants.sort((a, b) =>
-      a.points != b.points ? b.points - a.points : a.penalty - b.penalty);
+    this.contestants.sort(
+        (a, b) => a.points !== b.points ? b.points - a.points : a.penalty - b.penalty);
     let lastPoints, lastPenalty, rank;
     for (let i = this.contestants.length - 1; i >= 0; i--) {
       const c = this.contestants[i];
-      if (c.points != lastPoints || c.penalty != lastPenalty) {
+      if (c.points !== lastPoints || c.penalty !== lastPenalty) {
         lastPoints = c.points;
         lastPenalty = c.penalty;
         rank = i + 1;
@@ -167,7 +167,7 @@ class RatingCalculator {
     // calculating performance, varies.
     // Tests on some selected contests show (this perf - true perf) lie in [0, 4].
     for (const c of this.contestants) {
-      if (c.rank == 1) {
+      if (c.rank === 1) {
         c.performance = Infinity;  // Rank 1 always gains rating.
       } else {
         c.performance = binarySearch(
@@ -178,7 +178,7 @@ class RatingCalculator {
   }
 }
 
-export default function predict(contestants, calcPerfs=false) {
+export default function predict(contestants, calcPerfs = false) {
   new RatingCalculator(contestants, calcPerfs).calculate();
   return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta, c.performance));
 }

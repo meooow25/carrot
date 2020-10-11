@@ -43,7 +43,7 @@ export default class FFTConv {
   }
 
   transform(a) {
-    if (a.length != this.n) {
+    if (a.length !== this.n) {
       throw new Error(`a.length is ${a.length}, expected ${this.n}`);
     }
 
@@ -71,7 +71,7 @@ export default class FFTConv {
   }
 
   convolve(a, b) {
-    if (a.length == 0 || b.length == 0) {
+    if (a.length === 0 || b.length === 0) {
       return [];
     }
     const n = this.n;

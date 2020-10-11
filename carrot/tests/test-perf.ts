@@ -24,7 +24,7 @@ class WaitGroup {
     this.p = new Promise<void>((r) => { this.r = r; });
   }
   done(): void {
-    if (--this.n == 0) {
+    if (--this.n === 0) {
       this.r();
     }
   }
@@ -68,7 +68,7 @@ async function verifyVsNaive(
     assertArrayContains(ALLOWED_DELTAS_AT_FAST_PERFS, [deltaAtFastPerf]);
     incCounter(deltasAtFastPerfs, deltaAtFastPerf);
 
-    if (perf == 'Infinity') {
+    if (perf === 'Infinity') {
       assertEquals(fastPerf, perf);
       incCounter(perfDiffs, 0);
     } else {
@@ -95,7 +95,7 @@ async function verifyVsNaive(
     const fastPerfsPiece = Object.fromEntries(
         contestants.slice(i, i + perWorker).map((c) => {
           const fastPerf = fastPerfs.get(c.party);
-          return [c.party, fastPerf == Infinity ? 'Infinity' : fastPerf];
+          return [c.party, fastPerf === Infinity ? 'Infinity' : fastPerf];
         }));
     const w = makeWorker();
     w.postMessage({

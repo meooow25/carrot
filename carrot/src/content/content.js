@@ -24,7 +24,7 @@ function makeGreySpan(text, title) {
 
 function makePerformanceSpan(performance) {
   const span = document.createElement('span');
-  if (performance.value == 'Infinity') {
+  if (performance.value === 'Infinity') {
     span.textContent = Unicode.INFINITY;
     // ::first-letter does not match the inf symbol on Firefox, just don't set the LGM color class
     // and it defaults to black.
@@ -86,7 +86,7 @@ function makePredictedRankUpSpan(rank, deltaReqForRankUp, nextRank) {
   const span = document.createElement('span');
   span.style.fontWeight = 'bold';
 
-  if (nextRank == null) {  // LGM
+  if (nextRank === null) {  // LGM
     span.appendChild(makeRankSpan(rank));
     return span;
   }
@@ -143,7 +143,7 @@ function makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle) {
   return cell;
 }
 
-function makeDataCell(bottom=false, right=false) {
+function makeDataCell(bottom = false, right = false) {
   const cell = document.createElement('td');
   if (bottom) {
     cell.classList.add('bottom');
@@ -155,7 +155,7 @@ function makeDataCell(bottom=false, right=false) {
 }
 
 function populateCells(row, type, rankUpTint, perfCell, deltaCell, rankUpCell) {
-  if (row == null) {
+  if (row === undefined) {
     perfCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
     deltaCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
     rankUpCell.appendChild(makeGreySpan('N/A', 'Not applicable'));
@@ -211,11 +211,11 @@ function updateStandings(resp) {
     tableRow.querySelector('th:last-child, td:last-child').classList.remove('right');
 
     let perfCell, deltaCell, rankUpCell;
-    if (idx == 0) {
+    if (idx === 0) {
       perfCell = makePerfHeaderCell();
       deltaCell = makeDeltaHeaderCell(deltaColTitle);
       rankUpCell = makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle);
-    } else if (idx == rows.length - 1) {
+    } else if (idx === rows.length - 1) {
       perfCell = makeDataCell(true);
       deltaCell = makeDataCell(true);
       rankUpCell = makeDataCell(true, true);

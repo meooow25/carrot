@@ -9,7 +9,7 @@ class StorageWrapper {
   async get(key, defaultValue) {
     const obj = await browser.storage[this.storageName].get(key);
     const value = obj[key];
-    return value != null ? value : defaultValue;
+    return value !== undefined ? value : defaultValue;
   }
 
   async set(key, value) {
