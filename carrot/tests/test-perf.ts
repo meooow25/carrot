@@ -6,7 +6,7 @@ import { RoundData, readTestData, dataRowsToContestants } from './rounds.ts';
 import { assertEquals, assertArrayContains } from './asserts.ts';
 
 // Increase to go fast, if you have the cores.
-const NUM_WORKERS = 2;
+const NUM_WORKERS = 1;
 const WORKER_SRC = './perf-worker.ts';
 
 // Deltas calculated with fast perf are usually 0, rarely -1, never worse than that.
