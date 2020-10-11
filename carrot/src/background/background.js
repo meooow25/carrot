@@ -109,7 +109,7 @@ function getFinal(contest) {
         Object.fromEntries(contest.ratingChanges.map((c) => [c.handle, c.oldRating]));
     const rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
-      return ratingBeforeContest[handle] != null;
+      return ratingBeforeContest[handle] !== undefined;
     });
     const predictResultsForPerf = predictForRows(rows, ratingBeforeContest);
     contest.performances = new Map(predictResultsForPerf.map((r) => [r.handle, r.performance]));
@@ -173,7 +173,7 @@ async function maybeUpdateRatings() {
     return;
   }
   const startTimeMs = getNearestUpcomingRatedContestStartTime();
-  if (startTimeMs != null) {
+  if (startTimeMs !== null) {
     await RATINGS.maybeRefreshCache(startTimeMs);
   }
 }

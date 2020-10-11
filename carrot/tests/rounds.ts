@@ -37,7 +37,7 @@ export function readTestData(): RoundData[] {
 
 async function main() {
   const contestId = Deno.args[1];
-  if (Deno.args[0] != 'download' || !contestId) {
+  if (Deno.args[0] !== 'download' || !contestId) {
     console.error('Usage: deno run --allow-net --allow-write rounds.ts download <contestId>');
     Deno.exit(1);
   }

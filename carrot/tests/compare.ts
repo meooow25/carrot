@@ -46,7 +46,7 @@ async function main() {
   const diffCounter = new Map();
   for (const res of predictResults) {
     const actualDelta = rating[res.handle].new - rating[res.handle].old;
-    if (res.delta != actualDelta) {
+    if (res.delta !== actualDelta) {
       diffs.push([res.handle, rating[res.handle].old, actualDelta, res.delta]);
     }
     const diff = res.delta - actualDelta;

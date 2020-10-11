@@ -22,7 +22,7 @@ export class Contestant {
     this.points = points;
     this.penalty = penalty;
     this.rating = rating;
-    this.effectiveRating = rating === null || rating === undefined ? DEFAULT_RATING : rating;
+    this.effectiveRating = rating == null ? DEFAULT_RATING : rating;
     this.rank = null;
     this.delta = null;
   }
@@ -37,7 +37,7 @@ export class PredictResult {
   }
 
   get effectiveRating() {
-    return this.rating === null || this.rating === undefined ? DEFAULT_RATING : this.rating;
+    return this.rating == null ? DEFAULT_RATING : this.rating;
   }
 }
 
@@ -103,12 +103,12 @@ class RatingCalculator {
   }
 
   reassignRanks() {
-    this.contestants.sort((a, b) =>
-      a.points != b.points ? b.points - a.points : a.penalty - b.penalty);
+    this.contestants.sort(
+        (a, b) => a.points !== b.points ? b.points - a.points : a.penalty - b.penalty);
     let lastPoints, lastPenalty, rank;
     for (let i = this.contestants.length - 1; i >= 0; i--) {
       const c = this.contestants[i];
-      if (c.points != lastPoints || c.penalty != lastPenalty) {
+      if (c.points !== lastPoints || c.penalty !== lastPenalty) {
         lastPoints = c.points;
         lastPenalty = c.penalty;
         rank = i + 1;

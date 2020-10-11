@@ -11,7 +11,7 @@ export default class Rank {
   }
 
   static forRating(rating) {
-    if (rating === null || rating === undefined) {
+    if (rating == null) {
       return Rank.UNRATED;
     }
     for (const rank of Rank.RATED) {

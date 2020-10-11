@@ -43,7 +43,7 @@ export default class FFTConv {
   }
 
   transform(a) {
-    if (a.length != this.n) {
+    if (a.length !== this.n) {
       throw new Error(`a.length is ${a.length}, expected ${this.n}`);
     }
 
