@@ -57,7 +57,7 @@ for (let i = -RATING_RANGE_LEN; i <= RATING_RANGE_LEN; i++) {
 const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 
 class RatingCalculator {
-  constructor(contestants, calcPerfs=false) {
+  constructor(contestants, calcPerfs = false) {
     this.contestants = contestants;
     this.seed = undefined;
     this.adjustment = undefined;
@@ -178,7 +178,7 @@ class RatingCalculator {
   }
 }
 
-export default function predict(contestants, calcPerfs=false) {
+export default function predict(contestants, calcPerfs = false) {
   new RatingCalculator(contestants, calcPerfs).calculate();
   return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta, c.performance));
 }

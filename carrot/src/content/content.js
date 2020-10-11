@@ -143,7 +143,7 @@ function makeRankUpHeaderCell(rankUpColWidth, rankUpColTitle) {
   return cell;
 }
 
-function makeDataCell(bottom=false, right=false) {
+function makeDataCell(bottom = false, right = false) {
   const cell = document.createElement('td');
   if (bottom) {
     cell.classList.add('bottom');
