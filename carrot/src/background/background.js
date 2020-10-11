@@ -1,7 +1,7 @@
 import { LOCAL } from '../util/storage-wrapper.js';
 import * as settings from '../util/settings.js';
 import Contests from './cache/contests.js';
-import { ContestsComplete } from './cache/contests-complete.js';
+import { Contest, ContestsComplete } from './cache/contests-complete.js';
 import Ratings from './cache/ratings.js';
 import TopLevelCache from './cache/top-level-cache.js';
 import predict, { Contestant, PredictResult } from './predict.js';
@@ -77,17 +77,18 @@ async function calcDeltas(contestId) {
 
   const contest = await CONTESTS_COMPLETE.fetch(contestId);
   CONTESTS.update(contest.contest);
-  if (contest.isDefinitelyNotRated) {
+  if (contest.isRated == Contest.IsRated.NO) {
     throw new Error('UNRATED_CONTEST');
   }
   checkRatedByName(contest.contest.name);
   checkRatedByTeam(contest.rows);
 
-  if (!DEBUG_FORCE_PREDICT && contest.isFinished) {
+  if (!DEBUG_FORCE_PREDICT && contest.isRated == Contest.IsRated.YES) {
     prefs.checkFinalDeltasEnabled();
     return getFinal(contest);
   }
 
+  // Now contest.isRated = LIKELY
   prefs.checkPredictDeltasEnabled();
   return await getPredicted(contest);
 }

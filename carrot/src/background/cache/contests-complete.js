@@ -2,17 +2,22 @@
  * Wrapper for all useful contest data.
  */
 export class Contest {
-  constructor(contest, problems, rows, ratingChanges, fetchTime, isFinished, isDefinitelyNotRated) {
+  constructor(contest, problems, rows, ratingChanges, fetchTime, isRated) {
     this.contest = contest;
     this.problems = problems;
     this.rows = rows;
     this.ratingChanges = ratingChanges;
     this.fetchTime = fetchTime;
-    this.isFinished = isFinished;
-    this.isDefinitelyNotRated = isDefinitelyNotRated;
+    this.isRated = isRated;
     this.performances = undefined;  // To be populated by someone who calculates the performances.
   }
 }
+
+Contest.IsRated = {
+  YES: 'YES',
+  NO: 'NO',
+  LIKELY: 'LIKELY',
+};
 
 const RATING_PENDING_MAX_DAYS = 3;
 
@@ -43,28 +48,25 @@ export class ContestsComplete {
 
     const { contest, problems, rows } = await this.api.contest.standings(contestId);
     let ratingChanges;
-    let isDefinitelyRated = false;
-    let isDefinitelyNotRated = false;
+    let isRated = Contest.IsRated.LIKELY;
     if (contest.phase == 'FINISHED') {
       try {
         ratingChanges = await this.api.contest.ratingChanges(contestId);
         if (ratingChanges && ratingChanges.length > 0) {
-          isDefinitelyRated = true;
+          isRated = Contest.IsRated.YES;
         }
       } catch (er) {
         if (er.message.includes('Rating changes are unavailable for this contest')) {
-          isDefinitelyNotRated = true;
+          isRated = Contest.IsRated.NO;
         }
       }
     }
-    if (!isDefinitelyNotRated && !isDefinitelyRated && isOldContest(contest)) {
-      isDefinitelyNotRated = true;
+    if (isRated == Contest.IsRated.LIKELY && isOldContest(contest)) {
+      isRated = Contest.IsRated.NO;
     }
-    const isFinished = isDefinitelyRated || isDefinitelyNotRated;
+    const isFinished = isRated == Contest.IsRated.NO || isRated == Contest.IsRated.YES;
 
-    const c =
-        new Contest(
-            contest, problems, rows, ratingChanges, Date.now(), isFinished, isDefinitelyNotRated);
+    const c = new Contest(contest, problems, rows, ratingChanges, Date.now(), isRated);
     if (isFinished) {
       this.contests.set(contestId, c);
       this.contestIds.push(contestId);
