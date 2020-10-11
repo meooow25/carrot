@@ -22,7 +22,6 @@ self.onmessage = (e: MessageEvent): void => {
       continue;
     }
     const result: Record<string, any> = {
-      constestant: c,
       fastPerf,
       deltaAtFastPerf:
           fastPerf == 'Infinity' ? c.rank == 1 ? 0 : '-Infinity' : calcDelta(c, fastPerf),

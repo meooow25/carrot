@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        filter: ['/^(?!perf)/', '/perf.*(1305|1326|1342)/', '/perf.*(1349|1350|1352)/']
+        filter: ['/^(?!perf)/', '/perf.*(1305|1326)/', '/perf.*(1342|1349)/', '/perf.*(1350|1352)/']
     steps:
     - uses: actions/checkout@v2
     - uses: denolib/setup-deno@master
