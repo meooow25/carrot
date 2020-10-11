@@ -77,11 +77,10 @@ async function calcDeltas(contestId) {
 
   const contest = await CONTESTS_COMPLETE.fetch(contestId);
   CONTESTS.update(contest.contest);
+
   if (contest.isRated == Contest.IsRated.NO) {
     throw new Error('UNRATED_CONTEST');
   }
-  checkRatedByName(contest.contest.name);
-  checkRatedByTeam(contest.rows);
 
   if (!DEBUG_FORCE_PREDICT && contest.isRated == Contest.IsRated.YES) {
     prefs.checkFinalDeltasEnabled();
@@ -89,6 +88,8 @@ async function calcDeltas(contestId) {
   }
 
   // Now contest.isRated = LIKELY
+  checkRatedByName(contest.contest.name);
+  checkRatedByTeam(contest.rows);
   prefs.checkPredictDeltasEnabled();
   return await getPredicted(contest);
 }
