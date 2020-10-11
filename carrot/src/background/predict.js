@@ -1,4 +1,5 @@
 import FFTConv from '../util/conv.js';
+import binarySearch from '../util/binsearch.js'
 
 /**
  * Rating calculation code adapted from TLE at
@@ -7,6 +8,9 @@ import FFTConv from '../util/conv.js';
  * https://codeforces.com/contest/1/submission/13861109.
  *
  * The algorithm uses convolution via FFT for fast calculation.
+ * 
+ * Calculation of performance, which is the rating at which delta is zero, written with the help
+ * of ffao (https://codeforces.com/profile/ffao).
  */
 
 const PRINT_PERFORMANCE = false;
@@ -25,10 +29,11 @@ export class Contestant {
 }
 
 export class PredictResult {
-  constructor(handle, rating, delta) {
+  constructor(handle, rating, delta, performance) {
     this.handle = handle;
     this.rating = rating;
     this.delta = delta;
+    this.performance = performance;
   }
 
   get effectiveRating() {
@@ -36,8 +41,8 @@ export class PredictResult {
   }
 }
 
-const MAX_RATING_LIMIT = 6000;
-const MIN_RATING_LIMIT = -500;
+export const MAX_RATING_LIMIT = 6000;
+export const MIN_RATING_LIMIT = -500;
 const RATING_RANGE_LEN = MAX_RATING_LIMIT - MIN_RATING_LIMIT;
 const ELO_OFFSET = RATING_RANGE_LEN;
 const RATING_OFFSET = -MIN_RATING_LIMIT;
@@ -52,9 +57,11 @@ for (let i = -RATING_RANGE_LEN; i <= RATING_RANGE_LEN; i++) {
 const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 
 class RatingCalculator {
-  constructor(contestants) {
+  constructor(contestants, calcPerfs=false) {
     this.contestants = contestants;
     this.seed = undefined;
+    this.adjustment = undefined;
+    this.doCalcPerfs = calcPerfs;
   }
 
   calculate() {
@@ -63,6 +70,9 @@ class RatingCalculator {
     this.reassignRanks();
     this.calcDeltas();
     this.adjustDeltas();
+    if (this.doCalcPerfs) {
+      this.calcPerfs();
+    }
     const endTime = performance.now();
     if (PRINT_PERFORMANCE) {
       console.info(`Deltas calculated in ${endTime - startTime}ms.`);
@@ -107,26 +117,26 @@ class RatingCalculator {
     }
   }
 
+  calcDelta(contestant, assumedRating) {
+    const c = contestant;
+    const seed = this.getSeed(assumedRating, c.effectiveRating);
+    const midRank = Math.sqrt(c.rank * seed);
+    const needRating = this.rankToRating(midRank, c.effectiveRating);
+    const delta = Math.trunc((needRating - assumedRating) / 2);
+    return delta;
+  }
+
   calcDeltas() {
     for (const c of this.contestants) {
-      const seed = this.getSeed(c.effectiveRating, c.effectiveRating);
-      const midRank = Math.sqrt(c.rank * seed);
-      const needRating = this.rankToRating(midRank, c.effectiveRating);
-      c.delta = Math.trunc((needRating - c.effectiveRating) / 2);
+      c.delta = this.calcDelta(c, c.effectiveRating);
     }
   }
 
   rankToRating(rank, selfRating) {
-    let [left, right] = [1, MAX_RATING_LIMIT];
-    while (right - left > 1) {
-      const mid = Math.floor((left + right) / 2);
-      if (this.getSeed(mid, selfRating) < rank) {
-        right = mid;
-      } else {
-        left = mid;
-      }
-    }
-    return left;
+    // Finds last rating at which seed >= rank.
+    return binarySearch(
+      2, MAX_RATING_LIMIT,
+      (rating) => this.getSeed(rating, selfRating) < rank) - 1;
   }
 
   adjustDeltas() {
@@ -135,6 +145,7 @@ class RatingCalculator {
     {
       const deltaSum = this.contestants.reduce((a, b) => a + b.delta, 0);
       const inc = Math.trunc(-deltaSum / n) - 1;
+      this.adjustment = inc;
       for (const c of this.contestants) {
         c.delta += inc;
       }
@@ -143,14 +154,31 @@ class RatingCalculator {
       const zeroSumCount = Math.min(4 * Math.round(Math.sqrt(n)), n);
       const deltaSum = this.contestants.slice(0, zeroSumCount).reduce((a, b) => a + b.delta, 0);
       const inc = Math.min(Math.max(Math.trunc(-deltaSum / zeroSumCount), -10), 0);
+      this.adjustment += inc;
       for (const c of this.contestants) {
         c.delta += inc;
       }
     }
   }
+
+  calcPerfs() {
+    // This is not perfect, but close enough. The difference is caused by the adjustment value,
+    // which can change slightly when the rating of a single user, the user for whom we're
+    // calculating performance, varies.
+    // Tests on some selected contests show (this perf - true perf) lie in [0, 4].
+    for (const c of this.contestants) {
+      if (c.rank == 1) {
+        c.performance = Infinity;  // Rank 1 always gains rating.
+      } else {
+        c.performance = binarySearch(
+            MIN_RATING_LIMIT, MAX_RATING_LIMIT,
+            (assumedRating) => this.calcDelta(c, assumedRating) + this.adjustment <= 0);
+      }
+    }
+  }
 }
 
-export default function predict(contestants) {
-  new RatingCalculator(contestants).calculate();
-  return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta));
+export default function predict(contestants, calcPerfs=false) {
+  new RatingCalculator(contestants, calcPerfs).calculate();
+  return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta, c.performance));
 }

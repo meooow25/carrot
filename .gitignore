@@ -1,3 +1,5 @@
 release/
 tmp-firefox/
 tmp-chrome/
+
+.vscode/
