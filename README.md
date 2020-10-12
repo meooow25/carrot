@@ -1,4 +1,9 @@
-# Carrot
+<h1>
+  <sub>
+    <img src="https://raw.githubusercontent.com/meooow25/carrot/master/carrot/icons/icon.svg" height="38" width="38">
+  </sub>
+  Carrot
+</h1>
 
 A browser extension for [Codeforces](https://codeforces.com) that can
 - Calculate rating changes for a contest while it is running, based on the current standings.
