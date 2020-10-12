@@ -7,9 +7,16 @@
 
 <a href="https://addons.mozilla.org/en-US/firefox/addon/carrot/" alt="Mozilla Addons"><img src="https://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/addons/files/2015/11/get-the-addon.png" height="48"></a>&emsp;<a href="https://chrome.google.com/webstore/detail/carrot/gakohpplicjdhhfllilcjpfildodfnnn" alt="Chrome Web Store"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" height="48"></a>
 
-A browser extension for [Codeforces](https://codeforces.com) that can
-- Calculate rating changes for a contest while it is running, based on the current standings.
-- Show the final rating changes for finished contests.
+
+A browser extension to enhance [Codeforces](https://codeforces.com) ranklists
+
+**For an active contest**  
+Carrot calculates rating changes according the current standings when you open the ranklist, and displays them in a new column. Carrot also adds a column showing the delta required to rank up. The delta calculation is done in real time.
+
+**For a finished contest**  
+Carrot displays the final deltas of each contestant in a new column and shows their rank change, if any, in an adjacent column.
+
+For both active and finished contests, Carrot displays a column for performance, the rating at which the delta would be zero.
 
 ## FAQ
 
@@ -23,8 +30,5 @@ Not necessarily. The CF-Predictor extension communicates with a server, while Ca
 #### How is Carrot fast enough to calculate rating changes of every contestant in real time?
 FFT. The answer is always FFT.
 
-#### Cool, how do I install it?
-Carrot is available for [Firefox](https://addons.mozilla.org/en-US/firefox/addon/carrot/) and [Chrome](https://chrome.google.com/webstore/detail/carrot/gakohpplicjdhhfllilcjpfildodfnnn).
 
-#### Your code sucks
-Suggestions and ideas for improvements are most welcome.
+Suggestions and ideas for improvements are most welcome. Please [open an issue](https://github.com/meooow25/carrot/issues).
