@@ -30,5 +30,5 @@ Not necessarily. The CF-Predictor extension communicates with a server, while Ca
 #### How is Carrot fast enough to calculate rating changes of every contestant in real time?
 FFT. The answer is always FFT.
 
-#### I found a bug or would like to request a feature
+#### I found a bug or would like to request a feature.
 Reports are welcome, please [open an issue](https://github.com/meooow25/carrot/issues).
