@@ -22,13 +22,13 @@ For both active and finished contests, Carrot displays a column for performance,
 
 #### How does it work?
 Carrot runs in the browser and fetches all the data it needs from the [Codeforces API](https://codeforces.com/apiHelp).  
-It then calculates the rating changes following the algorithm published by Mike Mirzayanov [here](https://codeforces.com/blog/entry/20762), slightly modified so that it matches the current CF algorithm. This updated algorithm is adapted from [TLE](https://github.com/cheran-senthil/TLE/blob/master/tle/util/ranklist/rating_calculator.py).
+It then calculates the rating changes following the algorithm published by Mike Mirzayanov [here](https://codeforces.com/blog/entry/20762), slightly modified so that it matches the current CF algorithm. This updated algorithm is adapted from [TLE](https://github.com/cheran-senthil/TLE/blob/master/tle/util/ranklist/rating_calculator.py).  
 
 #### Is this better than [CF-Predictor](https://codeforces.com/blog/entry/50411)?
-Not necessarily. The CF-Predictor extension communicates with a server, while Carrot fetches data and performs all calculations in the browser. So the network usage is significantly lower for CF-Predictor. However, Carrot is ~~100% accurate~~(see [#18](https://github.com/meooow25/carrot/pull/18)) and it works in real time.
+Not necessarily. The CF-Predictor extension communicates with a server, while Carrot fetches data and performs all calculations in the browser. So the network usage is significantly lower for CF-Predictor. However, Carrot is ~~100% accurate~~ (see [#18](https://github.com/meooow25/carrot/pull/18)), it works in real time, and it shows performance values.
 
 #### How is Carrot fast enough to calculate rating changes of every contestant in real time?
 FFT. The answer is always FFT.
 
-
-Suggestions and ideas for improvements are most welcome. Please [open an issue](https://github.com/meooow25/carrot/issues).
+#### I found a bug or would like to request a feature
+Reports are welcome, please [open an issue](https://github.com/meooow25/carrot/issues).
