@@ -5,7 +5,7 @@
   Carrot
 </h1>
 
-<img src="https://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/addons/files/2015/11/get-the-addon.png" alt="Mozilla Addons" height="48">&emsp;<img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" alt="Chrome Web Store" height="48">
+<a href="https://addons.mozilla.org/en-US/firefox/addon/carrot/" alt="Mozilla Addons"><img src="https://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/addons/files/2015/11/get-the-addon.png" height="48"></a>&emsp;<a href="https://chrome.google.com/webstore/detail/carrot/gakohpplicjdhhfllilcjpfildodfnnn" alt="Chrome Web Store"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" height="48"></a>
 
 A browser extension for [Codeforces](https://codeforces.com) that can
 - Calculate rating changes for a contest while it is running, based on the current standings.
