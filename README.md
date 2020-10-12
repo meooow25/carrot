@@ -1,9 +1,11 @@
 <h1>
   <sub>
-    <img src="https://raw.githubusercontent.com/meooow25/carrot/master/carrot/icons/icon.svg" height="38" width="38">
+    <img src="https://raw.githubusercontent.com/meooow25/carrot/master/carrot/icons/icon.svg" alt="Carrot logo" height="38">
   </sub>
   Carrot
 </h1>
+
+<img src="https://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/addons/files/2015/11/get-the-addon.png" alt="Mozilla Addons" height="48">&emsp;<img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" alt="Chrome Web Store" height="48">
 
 A browser extension for [Codeforces](https://codeforces.com) that can
 - Calculate rating changes for a contest while it is running, based on the current standings.
