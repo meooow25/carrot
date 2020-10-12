@@ -5,7 +5,7 @@
   Carrot
 </h1>
 
-<a href="https://addons.mozilla.org/en-US/firefox/addon/carrot/" alt="Mozilla Addons"><img src="https://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/addons/files/2015/11/get-the-addon.png" height="48"></a>&emsp;<a href="https://chrome.google.com/webstore/detail/carrot/gakohpplicjdhhfllilcjpfildodfnnn" alt="Chrome Web Store"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" height="48"></a>
+<a href="https://addons.mozilla.org/en-US/firefox/addon/carrot/" alt="Mozilla Add-ons"><img src="https://ffp4g1ylyit3jdyti1hqcvtb-wpengine.netdna-ssl.com/addons/files/2015/11/get-the-addon.png" height="48"></a>&emsp;<a href="https://chrome.google.com/webstore/detail/carrot/gakohpplicjdhhfllilcjpfildodfnnn" alt="Chrome Web Store"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" height="48"></a>
 
 
 A browser extension to enhance [Codeforces](https://codeforces.com) ranklists
