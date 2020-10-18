@@ -14,7 +14,7 @@ export default class TopLevelCache {
     if (this.hasCached(contestId)) {
       throw new Error('Contest ID already present in cache');
     }
-    this.map[contestId] = deltasPromise;
+    this.map.set(contestId, deltasPromise);
     setTimeout(() => void this.map.delete(contestId), TIMEOUT);
   }
 
