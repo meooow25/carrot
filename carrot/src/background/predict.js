@@ -17,8 +17,8 @@ const PRINT_PERFORMANCE = false;
 const DEFAULT_RATING = 1400;
 
 export class Contestant {
-  constructor(party, points, penalty, rating) {
-    this.party = party;
+  constructor(handle, points, penalty, rating) {
+    this.handle = handle;
     this.points = points;
     this.penalty = penalty;
     this.rating = rating;
@@ -180,5 +180,5 @@ class RatingCalculator {
 
 export default function predict(contestants, calcPerfs = false) {
   new RatingCalculator(contestants, calcPerfs).calculate();
-  return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta, c.performance));
+  return contestants.map((c) => new PredictResult(c.handle, c.rating, c.delta, c.performance));
 }

@@ -8,17 +8,17 @@ self.onmessage = (e: MessageEvent): void => {
 
   function replace(handle: string, assumedRating: number) {
     return contestants.map(
-      (c) => c.party === handle ? new Contestant(handle, c.points, c.penalty, assumedRating) : c);
+      (c) => c.handle === handle ? new Contestant(handle, c.points, c.penalty, assumedRating) : c);
   }
 
   function calcDelta(c: Contestant, assumedRating: number): number {
-    const results: PredictResult[] = predict(replace(c.party, assumedRating));
-    return results.filter((r) => r.handle === c.party)[0].delta;
+    const results: PredictResult[] = predict(replace(c.handle, assumedRating));
+    return results.filter((r) => r.handle === c.handle)[0].delta;
   }
 
   for (const c of contestants) {
-    const fastPerf = fastPerfs[c.party];
-    if (fastPerfs[c.party] === undefined) {
+    const fastPerf = fastPerfs[c.handle];
+    if (fastPerfs[c.handle] === undefined) {
       continue;
     }
     const result: Record<string, any> = {
