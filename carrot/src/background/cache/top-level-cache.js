@@ -7,7 +7,7 @@ const TIMEOUT = 30 * 1000;  // 30 seconds
  */
 export default class TopLevelCache {
   constructor() {
-    this.map = {};
+    this.map = new Map();
   }
 
   cache(contestId, deltasPromise) {
@@ -15,14 +15,14 @@ export default class TopLevelCache {
       throw new Error('Contest ID already present in cache');
     }
     this.map[contestId] = deltasPromise;
-    setTimeout(() => { delete this.map[contestId]; }, TIMEOUT);
+    setTimeout(() => void this.map.delete(contestId), TIMEOUT);
   }
 
   hasCached(contestId) {
-    return contestId in this.map;
+    return this.map.has(contestId);
   }
 
-  get(contestId) {
-    return this.map[contestId];
+  getCached(contestId) {
+    return this.map.get(contestId);
   }
 }

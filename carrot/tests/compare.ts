@@ -26,7 +26,7 @@ async function main() {
     return;
   }
 
-  const rating = Object.fromEntries(
+  const rating = new Map<string, {old: number, new: number}>(
     ratingChanges.map((r: any) => [r.handle, { old: r.oldRating, new: r.newRating }]));
 
   console.info('Fetching standings...');
@@ -38,16 +38,16 @@ async function main() {
   console.info('Calculating deltas...');
   const contestants = rows.map((row: any) => {
     const handle = row.party.members[0].handle;
-    return new Contestant(handle, row.points, row.penalty, rating[handle].old);
+    return new Contestant(handle, row.points, row.penalty, rating.get(handle)!.old);
   });
   const predictResults = predict(contestants);
 
   const diffs = [];
   const diffCounter = new Map();
   for (const res of predictResults) {
-    const actualDelta = rating[res.handle].new - rating[res.handle].old;
+    const actualDelta = rating.get(res.handle)!.new - rating.get(res.handle)!.old;
     if (res.delta !== actualDelta) {
-      diffs.push([res.handle, rating[res.handle].old, actualDelta, res.delta]);
+      diffs.push([res.handle, rating.get(res.handle)!.old, actualDelta, res.delta]);
     }
     const diff = res.delta - actualDelta;
     diffCounter.set(diff, (diffCounter.get(diff) ?? 0) + 1);
