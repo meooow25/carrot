@@ -94,8 +94,8 @@ async function verifyVsNaive(
   for (let i = 0; i < contestants.length; i += perWorker) {
     const fastPerfsPiece = Object.fromEntries(
         contestants.slice(i, i + perWorker).map((c) => {
-          const fastPerf = fastPerfs.get(c.party);
-          return [c.party, fastPerf === Infinity ? 'Infinity' : fastPerf];
+          const fastPerf = fastPerfs.get(c.handle);
+          return [c.handle, fastPerf === Infinity ? 'Infinity' : fastPerf];
         }));
     const w = makeWorker();
     w.postMessage({

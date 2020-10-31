@@ -63,7 +63,7 @@ async function getDeltas(contestId) {
     const deltasPromise = calcDeltas(contestId);
     TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
   }
-  return await TOP_LEVEL_CACHE.get(contestId);
+  return await TOP_LEVEL_CACHE.getCached(contestId);
 }
 
 async function calcDeltas(contestId) {
@@ -71,7 +71,7 @@ async function calcDeltas(contestId) {
   prefs.checkAnyDeltasEnabled();
 
   if (CONTESTS.hasCached(contestId)) {
-    const contest = CONTESTS.get(contestId);
+    const contest = CONTESTS.getCached(contestId);
     checkRatedByName(contest.name);
   }
 
@@ -97,7 +97,7 @@ async function calcDeltas(contestId) {
 function predictForRows(rows, ratingBeforeContest) {
   const contestants = rows.map((row) => {
     const handle = row.party.members[0].handle;
-    return new Contestant(handle, row.points, row.penalty, ratingBeforeContest[handle]);
+    return new Contestant(handle, row.points, row.penalty, ratingBeforeContest.get(handle));
   });
   return predict(contestants, true);
 }
@@ -105,11 +105,10 @@ function predictForRows(rows, ratingBeforeContest) {
 function getFinal(contest) {
   // Calculate and save the performances on the contest object if not already saved.
   if (contest.performances === null) {
-    const ratingBeforeContest =
-        Object.fromEntries(contest.ratingChanges.map((c) => [c.handle, c.oldRating]));
+    const ratingBeforeContest = new Map(contest.ratingChanges.map((c) => [c.handle, c.oldRating]));
     const rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
-      return ratingBeforeContest[handle] !== undefined;
+      return ratingBeforeContest.has(handle);
     });
     const predictResultsForPerf = predictForRows(rows, ratingBeforeContest);
     contest.performances = new Map(predictResultsForPerf.map((r) => [r.handle, r.performance]));
@@ -133,7 +132,8 @@ async function getPredicted(contest) {
     // For educational rounds, standings include contestants for whom the contest is not rated.
     rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
-      return ratingMap[handle] === undefined || ratingMap[handle] < EDU_ROUND_RATED_THRESHOLD;
+      // Rated if the user is unrated or has rating below EDU_ROUND_RATED_THRESHOLD
+      return !ratingMap.has(handle) || ratingMap.get(handle) < EDU_ROUND_RATED_THRESHOLD;
     });
   }
   const predictResults = predictForRows(rows, ratingMap);

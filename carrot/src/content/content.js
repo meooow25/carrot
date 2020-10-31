@@ -100,7 +100,7 @@ function makePredictedRankUpSpan(rank, deltaReqForRankUp, nextRank) {
 function makePerfHeaderCell() {
   const cell = document.createElement('th');
   cell.classList.add('top');
-  cell.style.width = '4.5em';
+  cell.style.width = '4em';
   {
     const span = document.createElement('span');
     span.textContent = Unicode.GREEK_CAPITAL_PI;

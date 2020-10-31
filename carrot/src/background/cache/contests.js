@@ -9,7 +9,7 @@ const REFRESH_INTERVAL_ON_ERR = 20 * 60 * 1000;  // 20 minutes
 export default class Contests {
   constructor(api) {
     this.api = api;
-    this.contestMap = {};
+    this.contestMap = new Map();
     this.lock = new Lock();
     this.lastFetchTime = 0;
     this.lastFetchOk = false;
@@ -26,11 +26,7 @@ export default class Contests {
       this.lastFetchTime = now;
       try {
         const contests = await this.api.contest.list();
-        const contestMap = {};
-        for (const c of contests) {
-          contestMap[c.id] = c;
-        }
-        this.contestMap = contestMap;
+        this.contestMap = new Map(contests.map((c) => [c.id, c]));
         this.lastFetchOk = true;
       } catch (er) {
         console.warn('Unable to fetch contest list: ' + er);
@@ -43,18 +39,18 @@ export default class Contests {
   }
 
   list() {
-    return Object.values(this.contestMap);
+    return Array.from(this.contestMap.values());
   }
 
   hasCached(contestId) {
-    return contestId in this.contestMap;
+    return this.contestMap.has(contestId);
   }
 
-  get(contestId) {
-    return this.contestMap[contestId];
+  getCached(contestId) {
+    return this.contestMap.get(contestId);
   }
 
   update(contest) {
-    this.contestMap[contest.id] = contest;
+    this.contestMap.set(contest.id, contest);
   }
 }

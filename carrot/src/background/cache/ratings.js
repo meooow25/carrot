@@ -44,16 +44,15 @@ export default class Ratings {
       throw new Error('getCurrentRatings should be called after contest start');
     }
     await this.maybeRefreshCache(contestStartMs);
-    return await this.storage.get(RATINGS);
+    const ratings = await this.storage.get(RATINGS);
+    return new Map(Object.entries(ratings));
   }
 
   async cacheRatings() {
     const users = await this.api.user.ratedList(false);
-    const ratingMap = {};
-    for (const user of users) {
-      ratingMap[user.handle] = user.rating;
-    }
+    // Save as object, saving as list of pairs goes over Chrome's 5MB local limit.
+    const ratings = Object.fromEntries(users.map((u) => [u.handle, u.rating]));
     await this.storage.set(RATINGS_TIMESTAMP, Date.now());
-    await this.storage.set(RATINGS, ratingMap);
+    await this.storage.set(RATINGS, ratings);
   }
 }

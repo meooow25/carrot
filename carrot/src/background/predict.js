@@ -17,14 +17,16 @@ const PRINT_PERFORMANCE = false;
 const DEFAULT_RATING = 1400;
 
 export class Contestant {
-  constructor(party, points, penalty, rating) {
-    this.party = party;
+  constructor(handle, points, penalty, rating) {
+    this.handle = handle;
     this.points = points;
     this.penalty = penalty;
     this.rating = rating;
     this.effectiveRating = rating == null ? DEFAULT_RATING : rating;
+
     this.rank = null;
     this.delta = null;
+    this.performance = null;
   }
 }
 
@@ -57,20 +59,19 @@ for (let i = -RATING_RANGE_LEN; i <= RATING_RANGE_LEN; i++) {
 const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 
 class RatingCalculator {
-  constructor(contestants, calcPerfs = false) {
+  constructor(contestants) {
     this.contestants = contestants;
     this.seed = null;
     this.adjustment = null;
-    this.doCalcPerfs = calcPerfs;
   }
 
-  calculate() {
+  calculateDeltas(calcPerfs = false) {
     const startTime = performance.now();
     this.calcSeed();
     this.reassignRanks();
     this.calcDeltas();
     this.adjustDeltas();
-    if (this.doCalcPerfs) {
+    if (calcPerfs) {
       this.calcPerfs();
     }
     const endTime = performance.now();
@@ -179,6 +180,6 @@ class RatingCalculator {
 }
 
 export default function predict(contestants, calcPerfs = false) {
-  new RatingCalculator(contestants, calcPerfs).calculate();
-  return contestants.map((c) => new PredictResult(c.party, c.rating, c.delta, c.performance));
+  new RatingCalculator(contestants).calculateDeltas(calcPerfs);
+  return contestants.map((c) => new PredictResult(c.handle, c.rating, c.delta, c.performance));
 }
