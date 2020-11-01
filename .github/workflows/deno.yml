@@ -1,4 +1,4 @@
-name: Deno CI
+name: Tests
 
 on:
   push:
@@ -9,13 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        filter: ['/^(?!perf)/', '/perf.*(1305|1326)/', '/perf.*(1342|1349)/', '/perf.*(1350|1352)/']
     steps:
     - uses: actions/checkout@v2
     - uses: denolib/setup-deno@master
       with:
         deno-version: v1.x
     - name: Run tests
-      run: deno test --allow-read --filter '${{ matrix.filter }}' carrot/tests/test-*.ts
+      run: deno test --allow-read carrot/tests/test-*.ts
