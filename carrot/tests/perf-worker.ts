@@ -2,6 +2,7 @@ import { Contestant } from '../src/background/predict.js';
 
 import { calcDelta, calculateRealPerfs } from './perf-util.ts';
 
+// Local function to avoid net dependency
 function assert(value: boolean) {
   if (!value) {
     throw new Error('Assert failed');
@@ -16,7 +17,7 @@ self.onmessage = (e: MessageEvent): void => {
   for (const c of calculateRealPerfs(contestants, handles)) {
     const result = {
       handle: c.handle,
-      perf: c.performance == Infinity ? 'Infinity': c.performance,
+      perf: c.performance === Infinity ? 'Infinity': c.performance,
     };
     let deltaAtPerf;
     if (c.rank === 1) {

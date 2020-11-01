@@ -31,11 +31,6 @@ export class PerfData {
   constructor(readonly name: string, readonly rows: PerfRow[]) {}
 }
 
-function readDataFromFile(file: string): PerfRow[] {
-  const json: [string, number][] = JSON.parse(Deno.readTextFileSync(file));
-  return json.map(PerfRow.deserialize);
-}
-
 class WaitGroup {
   n: number;
   p: Promise<void>;
@@ -105,6 +100,12 @@ async function preparePerfs(name: string, contestants: Contestant[]): Promise<Pe
   return perfs;
 }
 
+function readDataFromFile(file: string): PerfRow[] {
+  const json: [string, number][] = JSON.parse(Deno.readTextFileSync(file));
+  return json.map(PerfRow.deserialize);
+}
+
+/** Returns all perf data from the data directory */
 export function readTestData(): PerfData[] {
   return Array.from(Deno.readDirSync(DATA_DIR))
     .filter((entry) => DATA_FILE_REGEX.test(entry.name))
@@ -123,7 +124,6 @@ async function main() {
   const fileNames =
       Array.from(Deno.readDirSync(DATA_DIR)).map((entry) => entry.name);
   for (const data of readRoundTestData()) {
-    // if (!data.name.includes('1349')) continue;
     const fileName = data.name + '-perfs.json';
     if (fileNames.includes(fileName)) {
       console.log(`${fileName} exists, skipping`);

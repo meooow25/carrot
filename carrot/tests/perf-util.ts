@@ -1,6 +1,7 @@
 import predict, { Contestant, PredictResult, MAX_RATING_LIMIT, MIN_RATING_LIMIT } from '../src/background/predict.js';
 import binarySearch from '../src/util/binsearch.js';
 
+/** Calculates the delta for a contestant with an assumed before-the-contest rating. */
 export function calcDelta(c: Contestant, contestants: Contestant[], assumedRating: number): number {
   function replace(handle: string, assumedRating: number) {
     return contestants.map(
@@ -11,6 +12,7 @@ export function calcDelta(c: Contestant, contestants: Contestant[], assumedRatin
   return results.filter((r) => r.handle === c.handle)[0].delta;
 }
 
+/** Calculates real performance values for the given handles. Very slow. */
 export function* calculateRealPerfs(contestants: Contestant[], handles: string[]): Generator<Contestant> {
   const handlesSet = new Set(handles);
   for (const c of contestants) {

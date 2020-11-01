@@ -63,8 +63,8 @@ function testPerfs(roundData: RoundData, perfData: PerfData) {
 
 const perfTestData = new Map(readPerfTestData().map((data) => [data.name, data]));
 for (const roundData of readRoundTestData()) {
-  const perfData = perfTestData.get(roundData.name)!;
   Deno.test('perf_' + roundData.name, () => {
+    const perfData = perfTestData.get(roundData.name)!;
     testPerfs(roundData, perfData);
   })
 }

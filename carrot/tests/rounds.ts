@@ -37,6 +37,7 @@ export function dataRowsToContestants(testData: DataRow[]): Contestant[] {
   return testData.map((row) => new Contestant(row.handle, row.points, row.penalty, row.rating));
 }
 
+/** Returns all round data from the data directory */
 export function readTestData(): RoundData[] {
   return Array.from(Deno.readDirSync(DATA_DIR))
     .filter((entry) => DATA_FILE_REGEX.test(entry.name))
@@ -58,12 +59,13 @@ async function main() {
 
   const changes = await api.contest.ratingChanges(contestId);
 
-  const dataRows: DataRow[] = changes.map((c: any): DataRow => {
+  const output = changes.map((c: any) => {
     const row = rowMap.get(c.handle);
-    return new DataRow(c.handle, row.points, row.penalty, c.oldRating, c.newRating - c.oldRating);
+    const dataRow =
+        new DataRow(c.handle, row.points, row.penalty, c.oldRating, c.newRating - c.oldRating);
+    return dataRow.serialize();
   });
 
-  const output = dataRows.map((row) => row.serialize());
   const fileName = `round-${contestId}-data.json`;
   Deno.writeTextFileSync(path.join(DATA_DIR, fileName), JSON.stringify(output));
 }
