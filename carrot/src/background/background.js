@@ -11,7 +11,7 @@ import * as api from './cf-api.js';
 
 const DEBUG_FORCE_PREDICT = false;
 
-const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'team'];
+const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'teams'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
 
 const CONTESTS = new Contests(api);
