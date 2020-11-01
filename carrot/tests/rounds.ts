@@ -1,6 +1,9 @@
+import * as path from 'https://deno.land/std@0.76.0/path/mod.ts';
+
 import { Contestant } from '../src/background/predict.js';
 import * as api from '../src/background/cf-api.js';
 
+const DATA_DIR = path.join(path.fromFileUrl(import.meta.url), '../data');
 const DATA_FILE_REGEX = /^(round-.*)-data.json$/;
 
 export class DataRow {
@@ -11,15 +14,23 @@ export class DataRow {
     readonly rating: number,
     readonly trueDelta: number,
   ) {}
+
+  serialize(): [string, number, number, number, number] {
+    return [this.handle, this.points, this.penalty, this.rating, this.trueDelta];
+  }
+
+  static deserialize(serialized: [string, number, number, number, number]): DataRow {
+    return new DataRow(...serialized);
+  }
 }
 
 export class RoundData {
   constructor(readonly name: string, readonly rows: DataRow[]) {}
 }
 
-function readDataFromFile(file: string | URL): DataRow[] {
+function readDataFromFile(file: string): DataRow[] {
   const json: [string, number, number, number, number][] = JSON.parse(Deno.readTextFileSync(file));
-  return json.map((j) => new DataRow(...j));
+  return json.map(DataRow.deserialize);
 }
 
 export function dataRowsToContestants(testData: DataRow[]): Contestant[] {
@@ -27,12 +38,12 @@ export function dataRowsToContestants(testData: DataRow[]): Contestant[] {
 }
 
 export function readTestData(): RoundData[] {
-  return Array.from(Deno.readDirSync(new URL('.', import.meta.url)))
+  return Array.from(Deno.readDirSync(DATA_DIR))
     .filter((entry) => DATA_FILE_REGEX.test(entry.name))
     .map((entry) =>
         new RoundData(
-            entry.name.match(DATA_FILE_REGEX)![1].replaceAll('-', '_'),
-            readDataFromFile(new URL(entry.name, import.meta.url))));
+            entry.name.match(DATA_FILE_REGEX)![1],
+            readDataFromFile(path.join(DATA_DIR, entry.name))));
 }
 
 async function main() {
@@ -47,13 +58,14 @@ async function main() {
 
   const changes = await api.contest.ratingChanges(contestId);
 
-  const output = changes.map((c: any) => {
+  const dataRows: DataRow[] = changes.map((c: any): DataRow => {
     const row = rowMap.get(c.handle);
-    return [c.handle, row.points, row.penalty, c.oldRating, c.newRating - c.oldRating];
+    return new DataRow(c.handle, row.points, row.penalty, c.oldRating, c.newRating - c.oldRating);
   });
 
+  const output = dataRows.map((row) => row.serialize());
   const fileName = `round-${contestId}-data.json`;
-  Deno.writeTextFileSync(new URL(fileName, import.meta.url), JSON.stringify(output));
+  Deno.writeTextFileSync(path.join(DATA_DIR, fileName), JSON.stringify(output));
 }
 
 if (import.meta.main) {

@@ -1,13 +1,9 @@
-import ProgressBar from 'https://deno.land/x/progress@v1.1.3/mod.ts';
+import predict, { PredictResult } from '../src/background/predict.js';
 
-import predict, { Contestant, PredictResult } from '../src/background/predict.js';
-
-import { RoundData, readTestData, dataRowsToContestants } from './rounds.ts';
-import { assertEquals, assertArrayIncludes } from './asserts.ts';
-
-// Increase to go fast, if you have the cores.
-const NUM_WORKERS = 4;
-const WORKER_SRC = './perf-worker.ts';
+import { RoundData, readTestData as readRoundTestData, dataRowsToContestants } from './rounds.ts';
+import { PerfData, readTestData as readPerfTestData } from './perfs.ts';
+import { calcDelta } from './perf-util.ts';
+import { assert, assertEquals, assertArrayIncludes } from './asserts.ts';
 
 // Deltas calculated with fast perf are usually 0, rarely -1, never worse than that.
 const ALLOWED_DELTAS_AT_FAST_PERFS = [-1, 0];
@@ -15,99 +11,46 @@ const ALLOWED_DELTAS_AT_FAST_PERFS = [-1, 0];
 // Fast perfs are at most 4 more than the correct value.
 const ALLOWED_PERF_DIFFS = [0, 1, 2, 3, 4];
 
-class WaitGroup {
-  n: number;
-  p: Promise<void>;
-  r = () => {};
-  constructor(n: number) {
-    this.n = n;
-    this.p = new Promise<void>((r) => { this.r = r; });
-  }
-  done(): void {
-    if (--this.n === 0) {
-      this.r();
-    }
-  }
-  async wait(): Promise<void> {
-    await this.p;
-  }
-}
-
-function makeProgressBar(total: number): () => void {
-  const progress = new ProgressBar({
-    total,
-    complete: "=",
-    incomplete: "-",
-    interval: 500,
-  });
-  let complete = 0;
-  progress.render(complete);
-  return () => progress.render(++complete);
-}
-
 function incCounter<T>(counter: Map<T, number>, key: T) {
   counter.set(key, (counter.get(key) ?? 0) + 1);
 }
 
-async function verifyVsNaive(
-  contestants: Contestant[],
-  fastPerfs: Map<string, number>): Promise<void> {
+function testPerfs(roundData: RoundData, perfData: PerfData) {
+  const contestants = dataRowsToContestants(roundData.rows);
+  const results: PredictResult[] = predict(contestants, true);
+  const fastPerfs = new Map<string, number>(results.map((r) => [r.handle, r.performance]));
+
+  const realPerfs = new Map(perfData.rows.map((row) => [row.handle, row.perf]));
 
   const deltasAtFastPerfs = new Map<number, number>();
   const perfDiffs = new Map<number, number>();
-  
-  const wg = new WaitGroup(contestants.length);
-  console.log();
-  const progressBarInc = makeProgressBar(contestants.length);
 
-  function dataReceived(data: any) {
-    const { fastPerf, deltaAtFastPerf, perf, deltaAtPerf } = data;
+  for (const c of contestants) {
+    const fastPerf = fastPerfs.get(c.handle)!;
+    const realPerf = realPerfs.get(c.handle)!;
 
-    assertEquals(deltaAtPerf, 0);
+    let deltaAtFastPerf;
+    if (c.rank === 1) {
+      assert(fastPerf === Infinity);
+      deltaAtFastPerf = 0;
+    } else {
+      deltaAtFastPerf = calcDelta(c, contestants, fastPerf);
+    }
 
     assertArrayIncludes(ALLOWED_DELTAS_AT_FAST_PERFS, [deltaAtFastPerf]);
     incCounter(deltasAtFastPerfs, deltaAtFastPerf);
 
-    if (perf === 'Infinity') {
-      assertEquals(fastPerf, perf);
+    if (realPerf === Infinity) {
+      assertEquals(fastPerf, realPerf);
       incCounter(perfDiffs, 0);
     } else {
-      const diff = fastPerf - perf;
+      const diff = fastPerf - realPerf;
       assertArrayIncludes(ALLOWED_PERF_DIFFS, [diff]);
       incCounter(perfDiffs, diff);
     }
-
-    wg.done();
-    progressBarInc();
   }
 
-  function makeWorker() {
-    const w = new Worker(new URL(WORKER_SRC, import.meta.url).href, { type: 'module' });
-    w.onmessage = (e) => dataReceived(e.data);
-    w.onerror = console.error;
-    w.onmessageerror = console.error;
-    return w;
-  }
-
-  const workers = [];
-  const perWorker = Math.ceil(contestants.length / NUM_WORKERS);
-  for (let i = 0; i < contestants.length; i += perWorker) {
-    const fastPerfsPiece = Object.fromEntries(
-        contestants.slice(i, i + perWorker).map((c) => {
-          const fastPerf = fastPerfs.get(c.handle);
-          return [c.handle, fastPerf === Infinity ? 'Infinity' : fastPerf];
-        }));
-    const w = makeWorker();
-    w.postMessage({
-      contestants,
-      fastPerfs: fastPerfsPiece,
-    });
-    workers.push(w);
-  }
-
-  await wg.wait();
-  workers.forEach((w) => w.terminate());
-
+  console.log();
   const deltasAtFastPerfsEntries =
       Array.from(deltasAtFastPerfs.entries()).sort((a, b) => a[0] - b[0]);
   console.log('deltasAtFastPerfs:');
@@ -118,15 +61,10 @@ async function verifyVsNaive(
   console.log(perfDiffsEntries);
 }
 
-async function testPerfs(data: RoundData): Promise<void> {
-  const contestants = dataRowsToContestants(data.rows);
-  const results: PredictResult[] = predict(contestants, true);
-  const fastPerfs = new Map<string, number>(results.map((r) => [r.handle, r.performance]));
-  await verifyVsNaive(contestants, fastPerfs);
-}
-
-for (const data of readTestData()) {
-  Deno.test('perf_' + data.name, async (): Promise<void> => {
-    await testPerfs(data);
+const perfTestData = new Map(readPerfTestData().map((data) => [data.name, data]));
+for (const roundData of readRoundTestData()) {
+  const perfData = perfTestData.get(roundData.name)!;
+  Deno.test('perf_' + roundData.name, () => {
+    testPerfs(roundData, perfData);
   })
 }

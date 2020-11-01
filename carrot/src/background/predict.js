@@ -58,7 +58,7 @@ for (let i = -RATING_RANGE_LEN; i <= RATING_RANGE_LEN; i++) {
 
 const fftConv = new FFTConv(ELO_WIN_PROB.length + RATING_RANGE_LEN - 1);
 
-class RatingCalculator {
+export class RatingCalculator {
   constructor(contestants) {
     this.contestants = contestants;
     this.seed = null;
