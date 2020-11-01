@@ -3,7 +3,7 @@ import ProgressBar from 'https://deno.land/x/progress@v1.1.3/mod.ts';
 import predict, { Contestant, PredictResult } from '../src/background/predict.js';
 
 import { RoundData, readTestData, dataRowsToContestants } from './rounds.ts';
-import { assertEquals, assertArrayContains } from './asserts.ts';
+import { assertEquals, assertArrayIncludes } from './asserts.ts';
 
 // Increase to go fast, if you have the cores.
 const NUM_WORKERS = 4;
@@ -65,7 +65,7 @@ async function verifyVsNaive(
 
     assertEquals(deltaAtPerf, 0);
 
-    assertArrayContains(ALLOWED_DELTAS_AT_FAST_PERFS, [deltaAtFastPerf]);
+    assertArrayIncludes(ALLOWED_DELTAS_AT_FAST_PERFS, [deltaAtFastPerf]);
     incCounter(deltasAtFastPerfs, deltaAtFastPerf);
 
     if (perf === 'Infinity') {
@@ -73,7 +73,7 @@ async function verifyVsNaive(
       incCounter(perfDiffs, 0);
     } else {
       const diff = fastPerf - perf;
-      assertArrayContains(ALLOWED_PERF_DIFFS, [diff]);
+      assertArrayIncludes(ALLOWED_PERF_DIFFS, [diff]);
       incCounter(perfDiffs, diff);
     }
 
