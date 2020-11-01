@@ -1,20 +1,4 @@
 /**
- * Represents complex numbers.
- */
-class Complex {
-  constructor(re = 0, im = 0) {
-    this.re = re;
-    this.im = im;
-  }
-  conj() { return new Complex(this.re, -this.im); }
-  add(x) { return new Complex(this.re + x.re, this.im + x.im); }
-  sub(x) { return new Complex(this.re - x.re, this.im - x.im); }
-  mul(x) { return new Complex(this.re * x.re - this.im * x.im, this.re * x.im + this.im * x.re) }
-}
-
-Complex.I = new Complex(0, 1);
-
-/**
  * Performs convolution of real sequences using Cooley-Tukey FFT in O(n log n).
  *
  * >> const fftConv = new FFTConv(8);  // Initialized with n = 8
@@ -30,10 +14,13 @@ export default class FFTConv {
       k++;
     }
     this.n = 1 << k;
-    this.w = new Array(this.n >> 1);
+    const n2 = this.n >> 1;
+    this.wr = [];
+    this.wi = [];
     const ang = 2 * Math.PI / this.n;
-    for (let i = 0; i < this.w.length; i++) {
-      this.w[i] = new Complex(Math.cos(i * ang), Math.sin(i * ang));
+    for (let i = 0; i < n2; i++) {
+      this.wr[i] = Math.cos(i * ang);
+      this.wi[i] = Math.sin(i * ang);
     }
     this.rev = new Array(this.n);
     this.rev[0] = 0;
@@ -42,11 +29,7 @@ export default class FFTConv {
     }
   }
 
-  transform(a) {
-    if (a.length !== this.n) {
-      throw new Error(`a.length is ${a.length}, expected ${this.n}`);
-    }
-
+  reverse(a) {
     for (let i = 1; i < this.n; i++) {
       if (i < this.rev[i]) {
         const tmp = a[i];
@@ -54,16 +37,27 @@ export default class FFTConv {
         a[this.rev[i]] = tmp;
       }
     }
+  }
 
+  transform(ar, ai) {
+    if (ar.length !== this.n) {
+      throw new Error(`a.length is ${ar.length}, expected ${this.n}`);
+    }
+
+    this.reverse(ar);
+    this.reverse(ai);
     for (let len = 2; len <= this.n; len <<= 1) {
       const half = len >> 1;
       const diff = this.n / len;
       for (let i = 0; i < this.n; i += len) {
         let pw = 0;
         for (let j = i; j < i + half; j++) {
-          const v = a[j + half].mul(this.w[pw]);
-          a[j + half] = a[j].sub(v);
-          a[j] = a[j].add(v);
+          const vr = ar[j + half] * this.wr[pw] - ai[j + half] * this.wi[pw];
+          const vi = ar[j + half] * this.wi[pw] + ai[j + half] * this.wr[pw];
+          ar[j + half] = ar[j] - vr;
+          ai[j + half] = ai[j] - vi;
+          ar[j] += vr;
+          ai[j] += vi;
           pw += diff;
         }
       }
@@ -81,32 +75,35 @@ export default class FFTConv {
         `a.length + b.length - 1 is ${a.length} + ${b.length} - 1 = ${resLen}, ` +
         `expected <= ${n}`);
     }
-    let c = new Array(n);
-    for (let i = 0; i < n; i++) {
-      c[i] = new Complex();
-    }
-    for (let i = 0; i < a.length; i++) {
-      c[i].re = a[i];
-    }
-    for (let i = 0; i < b.length; i++) {
-      c[i].im = b[i];
-    }
-    this.transform(c);
-    let res = new Array(n);
-    let tmpa = c[0].add(c[0].conj());
-    let tmpb = c[0].conj().sub(c[0]).mul(Complex.I);
-    res[0] = tmpa.mul(tmpb);
+    const cr = new Array(n).fill(0);
+    const ci = new Array(n).fill(0);
+    cr.splice(0, a.length, ...a);
+    ci.splice(0, b.length, ...b);
+    this.transform(cr, ci);
+
+    const dr = [];
+    const di = [];
+    let tar = 2 * cr[0];
+    let tai;
+    let tbr = 2 * ci[0];
+    let tbi;
+    dr[0] = tar * tbr;
+    di[0] = 0;
     for (let i = 1; i < n; i++) {
-      tmpa = c[i].add(c[n - i].conj());
-      tmpb = c[n - i].conj().sub(c[i]).mul(Complex.I);
-      res[i] = tmpa.mul(tmpb);
+      tar = cr[i] + cr[n - i];
+      tai = ci[i] - ci[n - i];
+      tbr = ci[n - i] + ci[i];
+      tbi = cr[n - i] - cr[i];
+      dr[i] = tar * tbr - tai * tbi;
+      di[i] = tar * tbi + tai * tbr;
     }
-    this.transform(res);
-    res[0] = res[0].re / (4 * n);
+
+    this.transform(dr, di);
+    const res = [];
+    res[0] = dr[0] / (4 * n);
     for (let i = 1, j = n - 1; i <= j; i++, j--) {
-      const tmp = res[i].re;
-      res[i] = res[j].re / (4 * n);
-      res[j] = tmp / (4 * n);
+      res[i] = dr[j] / (4 * n);
+      res[j] = dr[i] / (4 * n);
     }
     res.splice(resLen);
     return res;
