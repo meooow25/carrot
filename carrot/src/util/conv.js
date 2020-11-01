@@ -22,7 +22,7 @@ export default class FFTConv {
       this.wr[i] = Math.cos(i * ang);
       this.wi[i] = Math.sin(i * ang);
     }
-    this.rev = new Array(this.n);
+    this.rev = [];
     this.rev[0] = 0;
     for (let i = 1; i < this.n; i++) {
       this.rev[i] = (this.rev[i >> 1] >> 1) | ((i & 1) << (k - 1));
