@@ -53,8 +53,8 @@ function makeProgressBar(title: string, total: number): () => void {
   const progress = new ProgressBar({
     title,
     total,
-    complete: "=",
-    incomplete: "-",
+    complete: '=',
+    incomplete: '-',
     interval: 100,
   });
   let complete = 0;
