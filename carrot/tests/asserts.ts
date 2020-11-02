@@ -1,7 +1,7 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
-import { AssertionError } from 'https://deno.land/std/testing/asserts.ts';
-import { red, green, white, gray, bold } from 'https://deno.land/std/fmt/colors.ts';
-import { diff, DiffType, DiffResult } from 'https://deno.land/std/testing/_diff.ts';
+import { AssertionError } from 'https://deno.land/std@0.76.0/testing/asserts.ts';
+import { red, green, white, gray, bold } from 'https://deno.land/std@0.76.0/fmt/colors.ts';
+import { diff, DiffType, DiffResult } from 'https://deno.land/std@0.76.0/testing/_diff.ts';
 
 // These are internal functions from https://deno.land/std/testing/asserts.ts.
 // We use these because we add a new assert function that allows an error margin
@@ -151,4 +151,4 @@ export function assertEqualsWithEps(
   throw new AssertionError(message);
 }
 
-export * from 'https://deno.land/std/testing/asserts.ts';
+export * from 'https://deno.land/std@0.76.0/testing/asserts.ts';

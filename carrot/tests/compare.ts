@@ -1,4 +1,4 @@
-import * as colors from 'https://deno.land/std/fmt/colors.ts';
+import * as colors from 'https://deno.land/std@0.76.0/fmt/colors.ts';
 import * as api from '../src/background/cf-api.js';
 import predict, { Contestant } from '../src/background/predict.js';
 

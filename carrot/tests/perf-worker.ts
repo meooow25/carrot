@@ -1,39 +1,32 @@
-import predict, { Contestant, PredictResult, MAX_RATING_LIMIT, MIN_RATING_LIMIT } from '../src/background/predict.js';
-import binarySearch from '../src/util/binsearch.js'
+import { Contestant } from '../src/background/predict.js';
+
+import { calcDelta, calculateRealPerfs } from './perf-util.ts';
+
+// Local function to avoid net dependency
+function assert(value: boolean) {
+  if (!value) {
+    throw new Error('Assert failed');
+  }
+}
 
 // @ts-ignore: DedicatedWorkerGlobalScope
 self.onmessage = (e: MessageEvent): void => {
   const contestants: Contestant[] = e.data.contestants;
-  const fastPerfs: Record<string, number | 'Infinity'> = e.data.fastPerfs;
+  const handles: string[] = e.data.handles;
 
-  function replace(handle: string, assumedRating: number) {
-    return contestants.map(
-      (c) => c.handle === handle ? new Contestant(handle, c.points, c.penalty, assumedRating) : c);
-  }
-
-  function calcDelta(c: Contestant, assumedRating: number): number {
-    const results: PredictResult[] = predict(replace(c.handle, assumedRating));
-    return results.filter((r) => r.handle === c.handle)[0].delta;
-  }
-
-  for (const c of contestants) {
-    const fastPerf = fastPerfs[c.handle];
-    if (fastPerfs[c.handle] === undefined) {
-      continue;
-    }
-    const result: Record<string, any> = {
-      fastPerf,
-      deltaAtFastPerf:
-          fastPerf === 'Infinity' ? c.rank === 1 ? 0 : '-Infinity' : calcDelta(c, fastPerf),
-      perf:
-          c.rank === 1 ?
-          'Infinity' :
-          binarySearch(
-              MIN_RATING_LIMIT, MAX_RATING_LIMIT,
-              (assumedRating: number) => calcDelta(c, assumedRating) <= 0),
+  for (const c of calculateRealPerfs(contestants, handles)) {
+    const result = {
+      handle: c.handle,
+      perf: c.performance === Infinity ? 'Infinity': c.performance,
     };
-    result.deltaAtPerf = c.rank === 1 ? 0 : calcDelta(c, result.perf),
-
+    let deltaAtPerf;
+    if (c.rank === 1) {
+      assert(c.performance === Infinity);
+      deltaAtPerf = 0;
+    } else {
+      deltaAtPerf = calcDelta(c, contestants, c.performance);
+    }
+    assert(deltaAtPerf === 0);
     // @ts-ignore: DedicatedWorkerGlobalScope
     self.postMessage(result);
   }
