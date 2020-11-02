@@ -5,9 +5,12 @@ body {
 }
 
 .main {
+  padding: 15px 20px 12px;
+}
+
+.header {
   display: flex;
   align-items: center;
-  padding: 15px 20px;
 }
 
 .text {
@@ -34,4 +37,26 @@ body {
 #settings {
   margin-left: 15px;
   cursor: pointer;
+}
+
+#options {
+  font-family: sans-serif;
+  font-size: 13px;
+  color: #222;
+  text-align: center;
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 0;
+  display: inline-block;
+  text-align: initial;
+}
+
+li {
+  padding: 1px 0;
+}
+
+label {
+  padding-left: 5px;
 }

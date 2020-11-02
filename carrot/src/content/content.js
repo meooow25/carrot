@@ -1,5 +1,7 @@
 const PING_INTERVAL = 3 * 60 * 1000;  // 3 minutes
-const PREDICT_TEXT_ID = 'predict_text';
+
+const PREDICT_TEXT_ID = 'carrot-predict-text';
+const DISPLAY_NONE_CLS = 'carrot-display-none';
 
 const Unicode = {
   BLACK_CURVED_RIGHTWARDS_AND_UPWARDS_ARROW: '\u2BAD',
@@ -9,6 +11,44 @@ const Unicode = {
   SLANTED_NORTH_ARROW_WITH_HORIZONTAL_TAIL: '\u2B5C',
   BACKSLANTED_SOUTH_ARROW_WITH_HORIZONTAL_TAIL: '\u2B5D',
 };
+
+const PREDICT_COLUMNS = [
+  {
+    text: 'current performance',
+    id: 'carrot-current-performance',
+    setting: 'showColCurrentPerformance',
+  },
+  {
+    text: 'predicted delta',
+    id: 'carrot-predicted-delta',
+    setting: 'showColPredictedDelta',
+  },
+  {
+    text: 'delta required to rank up',
+    id: 'carrot-rank-up-delta',
+    setting: 'showColRankUpDelta',
+  },
+];
+const FINAL_COLUMNS = [
+  {
+    text: 'final performance',
+    id: 'carrot-final-performance',
+    setting: 'showColFinalPerformance',
+  },
+  {
+    text: 'final delta',
+    id: 'carrot-final-delta',
+    setting: 'showColFinalDelta',
+  },
+  {
+    text: 'rank change',
+    id: 'carrot-rank-change',
+    setting: 'showColRankChange',
+  },
+];
+const ALL_COLUMNS = PREDICT_COLUMNS.concat(FINAL_COLUMNS);
+
+let columns;  // Populated later
 
 function makeGreySpan(text, title) {
   const span = document.createElement('span');
@@ -196,11 +236,13 @@ function updateStandings(resp) {
       deltaColTitle = 'Final rating change';
       rankUpColWidth = '6.5em';
       rankUpColTitle = 'Rank change';
+      columns = FINAL_COLUMNS;
       break;
     case 'PREDICTED':
       deltaColTitle = 'Predicted rating change';
       rankUpColWidth = '7.5em';
       rankUpColTitle = 'Rating change for rank up';
+      columns = PREDICT_COLUMNS;
       break;
     default:
       throw new Error('Unknown prediction type: ' + resp.type);
@@ -233,15 +275,26 @@ function updateStandings(resp) {
       populateCells(resp.rowMap[handle], resp.type, rankUpTint, perfCell, deltaCell, rankUpCell);
     }
 
-    if (idx % 2) {
-      perfCell.classList.add('dark');
-      deltaCell.classList.add('dark');
-      rankUpCell.classList.add('dark');
+    const cells = [perfCell, deltaCell, rankUpCell];
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      if (idx % 2) {
+        cell.classList.add('dark');
+      }
+      cell.classList.add(columns[i].id, DISPLAY_NONE_CLS);
+      tableRow.appendChild(cell);
     }
+  }
+}
 
-    tableRow.appendChild(perfCell);
-    tableRow.appendChild(deltaCell);
-    tableRow.appendChild(rankUpCell);
+function updateColumnVisibility(prefs) {
+  for (const col of ALL_COLUMNS) {
+    const showCol = prefs[col.setting];
+    const func =
+        showCol ?
+        (cell) => cell.classList.remove(DISPLAY_NONE_CLS) :
+        (cell) => cell.classList.add(DISPLAY_NONE_CLS);
+    document.querySelectorAll(`.${col.id}`).forEach(func);
   }
 }
 
@@ -267,9 +320,9 @@ function showTimer(fetchTime) {
 }
 
 async function predict(contestId) {
-  let resp;
+  let data;
   try {
-    resp = await browser.runtime.sendMessage({ type: 'PREDICT', contestId: contestId });
+    data = await browser.runtime.sendMessage({ type: 'PREDICT', contestId: contestId });
   } catch (er) {
     switch (er.message) {
       case 'UNRATED_CONTEST':
@@ -284,8 +337,8 @@ async function predict(contestId) {
     return;
   }
 
-  updateStandings(resp);
-  switch (resp.type) {
+  updateStandings(data.predictResponse);
+  switch (data.predictResponse.type) {
     case 'FINAL':
       showFinal();
       break;
@@ -295,6 +348,7 @@ async function predict(contestId) {
     default:
       throw new Error('Unknown prediction type: ' + resp.type);
   }
+  updateColumnVisibility(data.prefs);
 }
 
 function main() {
@@ -313,3 +367,12 @@ function main() {
 }
 
 main();
+
+browser.runtime.onMessage.addListener((message) => {
+  if (message.type === 'LIST_COLS') {
+    return Promise.resolve(columns);
+  } else if (message.type == 'UPDATE_COLS') {
+    updateColumnVisibility(message.prefs);
+    return Promise.resolve();
+  }
+});

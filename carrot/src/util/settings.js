@@ -4,10 +4,6 @@ import { SYNC } from './storage-wrapper.js';
  * Exports utility functions to get or set user preferences to storage.
  */
 
-const ENABLE_PREDICT_DELTAS = 'settings.enablePredictDeltas';
-const ENABLE_FINAL_DELTAS = 'settings.enableFetchDeltas';
-const ENABLE_PREFETCH_RATINGS = 'settings.enablePrefetchRatings';
-
 function boolSetterGetter(key, defaultValue) {
   return async (value = undefined) => {
     if (value === undefined) {
@@ -17,6 +13,12 @@ function boolSetterGetter(key, defaultValue) {
   };
 }
 
-export const enablePredictDeltas = boolSetterGetter(ENABLE_PREDICT_DELTAS, true);
-export const enableFinalDeltas = boolSetterGetter(ENABLE_FINAL_DELTAS, true);
-export const enablePrefetchRatings = boolSetterGetter(ENABLE_PREFETCH_RATINGS, true);
+export const enablePredictDeltas = boolSetterGetter('settings.enablePredictDeltas', true);
+export const enableFinalDeltas = boolSetterGetter('settings.enableFetchDeltas', true);
+export const enablePrefetchRatings = boolSetterGetter('settings.enablePrefetchRatings', true);
+export const showColCurrentPerformance = boolSetterGetter('settings.showColCurrentPerformance', true);
+export const showColPredictedDelta = boolSetterGetter('settings.showColPredictedDelta', true);
+export const showColRankUpDelta = boolSetterGetter('settings.showColRankUpDelta', true);
+export const showColFinalPerformance = boolSetterGetter('settings.showColFinalPerformance', true);
+export const showColFinalDelta = boolSetterGetter('settings.showColFinalDelta', true);
+export const showColRankChange = boolSetterGetter('settings.showColRankChange', true);
