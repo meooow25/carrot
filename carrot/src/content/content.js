@@ -343,10 +343,10 @@ async function predict(contestId) {
       showFinal();
       break;
     case 'PREDICTED':
-      showTimer(resp.fetchTime);
+      showTimer(data.predictResponse.fetchTime);
       break;
     default:
-      throw new Error('Unknown prediction type: ' + resp.type);
+      throw new Error('Unknown prediction type: ' + data.predictResponse.type);
   }
   updateColumnVisibility(data.prefs);
 }
