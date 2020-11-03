@@ -69,6 +69,7 @@ li {
 
 label {
   margin-left: 8px;
+  cursor: pointer;
   vertical-align: middle;
 }
 
