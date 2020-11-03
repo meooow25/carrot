@@ -34,14 +34,10 @@ async function makeList(cols, changeCallback) {
 async function informAllTabs() {
   const prefs = await UserPrefs.create(settings);
   for (const tab of await browser.tabs.query({})) {
-    try {
-      await browser.tabs.sendMessage(tab.id, {
-        type: 'UPDATE_COLS',
-        prefs,
-      });
-    } catch (e) {
-      // No listener on this tab
-    }
+    browser.tabs.sendMessage(tab.id, {
+      type: 'UPDATE_COLS',
+      prefs,
+    }).catch(() => { /* No listener on this tab */ });
   }
 }
 
