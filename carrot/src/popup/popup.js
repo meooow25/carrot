@@ -25,7 +25,10 @@ async function makeList(cols, changeCallback) {
       changeCallback();
     });
   }
-  document.querySelector('#options').appendChild(ul);
+
+  const options = document.querySelector('#options');
+  options.appendChild(ul);
+  options.style.display = null;  // Make visible
 }
 
 async function informAllTabs() {
