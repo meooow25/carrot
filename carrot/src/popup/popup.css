@@ -1,3 +1,7 @@
+:root {
+  --carrot-orange: #e46d21;
+}
+
 body {
   background-color:#fff9f5;
   width: max-content;
@@ -5,23 +9,30 @@ body {
 }
 
 .main {
+  padding: 15px 20px;
+}
+
+.header {
   display: flex;
   align-items: center;
-  padding: 15px 20px;
 }
 
 .text {
   font-weight: bold;
   font-style: italic;
-  color: #e46d21;
+  color: var(--carrot-orange);
 }
 
 #icon {
   width: 32px;
 }
 
+#title-version {
+  flex-grow: 1;
+}
+
 #title {
-  font-size: 18px;
+  font-size: 20px;
   font-family: Georgia, serif;
   margin-left: 8px;
 }
@@ -32,6 +43,72 @@ body {
 }
 
 #settings {
-  margin-left: 15px;
+  margin-left: 20px;
   cursor: pointer;
 }
+
+#options {
+  font-family: sans-serif;
+  font-size: 13px;
+  color: #222;
+  text-align: center;
+  margin: 10px 10px 5px 5px;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  text-align: initial;
+}
+
+li {
+  margin-top: 8px;
+}
+
+label {
+  padding-left: 8px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+input[type=checkbox] {
+  vertical-align: middle;
+}
+
+/* Disable Chrome's black outline */
+input[type=checkbox]:focus {
+  outline: none;
+}
+
+/* Fancy toggle switch adapted from Firefox's extension enable/disable switch */
+input[type=checkbox] {
+  appearance: none;
+  height: 15px;
+  width: 25px;
+  margin: 0;
+  background-color: #888;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+input[type=checkbox]::before {
+  display: block;
+  content: '';
+  background: #fff;
+  height: 11px;
+  width: 11px;
+  margin: 2px;
+  border-radius: 50%;
+  transition: 50ms;
+}
+
+input[type=checkbox]:checked {
+  background: var(--carrot-orange);
+}
+
+input[type=checkbox]:checked::before {
+  transform: translate(10px);
+}
+/* Fancy toggle switch end */

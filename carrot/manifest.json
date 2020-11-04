@@ -18,7 +18,8 @@
   "content_scripts": [
     {
       "matches": ["*://*.codeforces.com/*"],
-      "js": ["src/content/content.js"]
+      "js": ["src/content/content.js"],
+      "css": ["src/content/content.css"]
     }
   ],
   "options_ui": {

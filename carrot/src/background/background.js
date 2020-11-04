@@ -6,7 +6,7 @@ import Ratings from './cache/ratings.js';
 import TopLevelCache from './cache/top-level-cache.js';
 import predict, { Contestant, PredictResult } from './predict.js';
 import PredictResponse from './predict-response.js';
-import UserPrefs from './user-prefs.js';
+import UserPrefs from '../util/user-prefs.js';
 import * as api from './cf-api.js';
 
 const DEBUG_FORCE_PREDICT = false;
@@ -19,25 +19,20 @@ const RATINGS = new Ratings(api, LOCAL);
 const CONTESTS_COMPLETE = new ContestsComplete(api);
 const TOP_LEVEL_CACHE = new TopLevelCache();
 
-browser.runtime.onMessage.addListener(listener);
-
-async function listener(message) {
-  try {
-    switch (message.type) {
-      case 'PREDICT':
-        return await getDeltas(message.contestId);
-      case 'PING':
-        await maybeUpdateContestList();
-        await maybeUpdateRatings();
-        return;
-      default:
-        throw new Error('Unknown message type');
-    }
-  } catch (er) {
-    console.error(er);
-    throw er;
+browser.runtime.onMessage.addListener((message) => {
+  let responsePromise;
+  if (message.type === 'PREDICT') {
+    responsePromise = getDeltas(message.contestId);
+  } else if (message.type === 'PING') {
+    responsePromise = Promise.all([maybeUpdateContestList(), maybeUpdateRatings()]);
+  } else {
+    return;
   }
-}
+  return responsePromise.catch((e) => {
+    console.error(e);
+    throw e;
+  });
+});
 
 // Prediction related code starts.
 
@@ -59,15 +54,16 @@ function checkRatedByTeam(rows) {
 }
 
 async function getDeltas(contestId) {
+  const prefs = await UserPrefs.create(settings);
   if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
-    const deltasPromise = calcDeltas(contestId);
+    const deltasPromise = calcDeltas(contestId, prefs);
     TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
   }
-  return await TOP_LEVEL_CACHE.getCached(contestId);
+  const predictResponse = await TOP_LEVEL_CACHE.getCached(contestId);
+  return { predictResponse, prefs };
 }
 
-async function calcDeltas(contestId) {
-  const prefs = await UserPrefs.create(settings);
+async function calcDeltas(contestId, prefs) {
   prefs.checkAnyDeltasEnabled();
 
   if (CONTESTS.hasCached(contestId)) {
