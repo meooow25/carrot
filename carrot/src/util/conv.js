@@ -22,8 +22,7 @@ export default class FFTConv {
       this.wr[i] = Math.cos(i * ang);
       this.wi[i] = Math.sin(i * ang);
     }
-    this.rev = [];
-    this.rev[0] = 0;
+    this.rev = [0];
     for (let i = 1; i < this.n; i++) {
       this.rev[i] = (this.rev[i >> 1] >> 1) | ((i & 1) << (k - 1));
     }
@@ -40,22 +39,21 @@ export default class FFTConv {
   }
 
   transform(ar, ai) {
-    if (ar.length !== this.n) {
-      throw new Error(`a.length is ${ar.length}, expected ${this.n}`);
-    }
-
     this.reverse(ar);
     this.reverse(ai);
+    const wr = this.wr;
+    const wi = this.wi;
     for (let len = 2; len <= this.n; len <<= 1) {
       const half = len >> 1;
       const diff = this.n / len;
       for (let i = 0; i < this.n; i += len) {
         let pw = 0;
         for (let j = i; j < i + half; j++) {
-          const vr = ar[j + half] * this.wr[pw] - ai[j + half] * this.wi[pw];
-          const vi = ar[j + half] * this.wi[pw] + ai[j + half] * this.wr[pw];
-          ar[j + half] = ar[j] - vr;
-          ai[j + half] = ai[j] - vi;
+          const k = j + half;
+          const vr = ar[k] * wr[pw] - ai[k] * wi[pw];
+          const vi = ar[k] * wi[pw] + ai[k] * wr[pw];
+          ar[k] = ar[j] - vr;
+          ai[k] = ai[j] - vi;
           ar[j] += vr;
           ai[j] += vi;
           pw += diff;
@@ -81,29 +79,25 @@ export default class FFTConv {
     ci.splice(0, b.length, ...b);
     this.transform(cr, ci);
 
-    const dr = [];
-    const di = [];
-    let tar = 2 * cr[0];
-    let tai;
-    let tbr = 2 * ci[0];
-    let tbi;
-    dr[0] = tar * tbr;
-    di[0] = 0;
-    for (let i = 1; i < n; i++) {
-      tar = cr[i] + cr[n - i];
-      tai = ci[i] - ci[n - i];
-      tbr = ci[n - i] + ci[i];
-      tbi = cr[n - i] - cr[i];
-      dr[i] = tar * tbr - tai * tbi;
-      di[i] = tar * tbi + tai * tbr;
+    cr[0] = 4 * cr[0] * ci[0];
+    ci[0] = 0;
+    for (let i = 1, j = n - 1; i <= j; i++, j--) {
+      const ar = cr[i] + cr[j];
+      const ai = ci[i] - ci[j];
+      const br = ci[j] + ci[i];
+      const bi = cr[j] - cr[i];
+      cr[i] = ar * br - ai * bi;
+      ci[i] = ar * bi + ai * br;
+      cr[j] = cr[i];
+      ci[j] = -ci[i];
     }
 
-    this.transform(dr, di);
+    this.transform(cr, ci);
     const res = [];
-    res[0] = dr[0] / (4 * n);
+    res[0] = cr[0] / (4 * n);
     for (let i = 1, j = n - 1; i <= j; i++, j--) {
-      res[i] = dr[j] / (4 * n);
-      res[j] = dr[i] / (4 * n);
+      res[i] = cr[j] / (4 * n);
+      res[j] = cr[i] / (4 * n);
     }
     res.splice(resLen);
     return res;
