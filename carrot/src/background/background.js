@@ -175,3 +175,11 @@ async function maybeUpdateRatings() {
 }
 
 // Cache related code ends.
+
+browser.runtime.onInstalled.addListener((details) => {
+  if (details.previousVersion == '0.6.2') {
+    // Clear cache to remove stale timestamp
+    // https://github.com/meooow25/carrot/issues/31
+    browser.storage.local.clear();
+  }
+});
