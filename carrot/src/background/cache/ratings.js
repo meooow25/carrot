@@ -50,9 +50,8 @@ export default class Ratings {
 
   async cacheRatings() {
     const users = await this.api.user.ratedList(false);
-    // Save as object, saving as list of pairs goes over Chrome's 5MB local limit.
     const ratings = Object.fromEntries(users.map((u) => [u.handle, u.rating]));
-    await this.storage.set(RATINGS_TIMESTAMP, Date.now());
     await this.storage.set(RATINGS, ratings);
+    await this.storage.set(RATINGS_TIMESTAMP, Date.now());
   }
 }
