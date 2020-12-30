@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Carrot",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Rating predictor for Codeforces",
   "icons": {
     "48": "icons/icon.svg",
