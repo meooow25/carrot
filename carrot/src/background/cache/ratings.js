@@ -9,8 +9,8 @@ const RATINGS = 'cache.ratings';
  * Browser storage cache of user ratings. Ratings of all users are cached because user.info API
  * endpoint does not work with a large number of handles which is required for prediction. Browser
  * storage is used so that the data is retained if the user restarts the browser. The amount of
- * data fetched is around 14MB so we would rather not refetch it. We keep only handles and ratings
- * in storage, which uses around 4MB.
+ * data fetched is around 18MB so we would rather not refetch it. We keep only handles and ratings
+ * in storage, which uses around 5MB.
  */
 export default class Ratings {
   constructor(api, storage) {
