@@ -80,7 +80,7 @@ export class ContestsComplete {
     // The exception is during new year's magic, when people change handles and handles on the
     // ranklist can become outdated.
     // TODO: New users can also change handles upto a week(?) after joining. Is this a big enough
-    // issue to stop caching at all?
+    // issue to stop caching completely?
     if (isFinished && !isMagicOn()) {
       this.contests.set(contestId, c);
       this.contestIds.push(contestId);
