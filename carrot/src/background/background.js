@@ -178,7 +178,7 @@ async function maybeUpdateRatings() {
 // Cache related code ends.
 
 browser.runtime.onInstalled.addListener((details) => {
-  if (compareVersions(details.previousVersion, '0.6.2') <= 0) {
+  if (details.previousVersion && compareVersions(details.previousVersion, '0.6.2') <= 0) {
     // Clear cache to remove stale timestamp
     // https://github.com/meooow25/carrot/issues/31
     browser.storage.local.clear();
