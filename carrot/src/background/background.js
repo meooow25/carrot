@@ -8,6 +8,7 @@ import predict, { Contestant, PredictResult } from './predict.js';
 import PredictResponse from './predict-response.js';
 import UserPrefs from '../util/user-prefs.js';
 import * as api from './cf-api.js';
+import compareVersions from '../util/version-compare.js';
 
 const DEBUG_FORCE_PREDICT = false;
 
@@ -177,7 +178,7 @@ async function maybeUpdateRatings() {
 // Cache related code ends.
 
 browser.runtime.onInstalled.addListener((details) => {
-  if (details.previousVersion == '0.6.2') {
+  if (compareVersions(details.previousVersion, '0.6.2') <= 0) {
     // Clear cache to remove stale timestamp
     // https://github.com/meooow25/carrot/issues/31
     browser.storage.local.clear();
