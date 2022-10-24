@@ -23,8 +23,10 @@ const TOP_LEVEL_CACHE = new TopLevelCache();
 browser.runtime.onMessage.addListener((message) => {
   let responsePromise;
   if (message.type === 'PREDICT') {
+    console.info('Received message: %o', message);
     responsePromise = getDeltas(message.contestId);
   } else if (message.type === 'PING') {
+    console.info('Received message: %o', message);
     responsePromise = Promise.all([maybeUpdateContestList(), maybeUpdateRatings()]);
   } else {
     return;
