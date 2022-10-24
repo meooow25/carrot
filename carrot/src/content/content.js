@@ -326,10 +326,10 @@ async function predict(contestId) {
   } catch (er) {
     switch (er.message) {
       case 'UNRATED_CONTEST':
-        console.info('Unrated contest, not displaying delta column.');
+        console.info('[Carrot] Unrated contest, not displaying delta column.');
         break;
       case 'DISABLED':
-        console.info('Deltas for this contest are disabled according to user settings.');
+        console.info('[Carrot] Deltas for this contest are disabled according to user settings.');
         break;
       default:
         throw er;
@@ -357,11 +357,15 @@ function main() {
   const contestId = matches ? matches[1] : null;
   if (contestId && document.querySelector('table.standings')) {
     predict(contestId)
-      .catch(er => console.error(er));
+      .then(() => console.info('[Carrot] Predict success'))
+      .catch(er => console.error('[Carrot] Predict error: %o', er));
   }
 
   // On any Codeforces page.
-  const ping = () => { browser.runtime.sendMessage({ type: 'PING' }); };
+  const ping = () => {
+    browser.runtime.sendMessage({ type: 'PING' })
+      .catch(er => console.error('[Carrot] Background page ping error: %o', er));
+  };
   ping();
   setInterval(ping, PING_INTERVAL);
 }
