@@ -48,8 +48,6 @@ const FINAL_COLUMNS = [
 ];
 const ALL_COLUMNS = PREDICT_COLUMNS.concat(FINAL_COLUMNS);
 
-let columns;  // Populated later
-
 function makeGreySpan(text, title) {
   const span = document.createElement('span');
   span.style.fontWeight = 'bold';
@@ -230,7 +228,7 @@ function populateCells(row, type, rankUpTint, perfCell, deltaCell, rankUpCell) {
 }
 
 function updateStandings(resp) {
-  let deltaColTitle, rankUpColWidth, rankUpColTitle;
+  let deltaColTitle, rankUpColWidth, rankUpColTitle, columns;
   switch (resp.type) {
     case 'FINAL':
       deltaColTitle = 'Final rating change';
@@ -285,6 +283,8 @@ function updateStandings(resp) {
       tableRow.appendChild(cell);
     }
   }
+
+  return columns;
 }
 
 function updateColumnVisibility(prefs) {
@@ -337,7 +337,7 @@ async function predict(contestId) {
     return;
   }
 
-  updateStandings(data.predictResponse);
+  const columns = updateStandings(data.predictResponse);
   switch (data.predictResponse.type) {
     case 'FINAL':
       showFinal();
@@ -349,7 +349,16 @@ async function predict(contestId) {
       throw new Error('Unknown prediction type: ' + data.predictResponse.type);
   }
   updateColumnVisibility(data.prefs);
+  return columns;
 }
+
+// Mutable state, set once.
+// If predict succeeds, columns will be set to either PREDICT_COLUMNS or FINAL_COLUMNS.
+// If it fails, error will be set to the received error.
+const state = {
+  columns: null,
+  error: null,
+};
 
 function main() {
   // On any Codeforces ranklist page.
@@ -357,8 +366,14 @@ function main() {
   const contestId = matches ? matches[1] : null;
   if (contestId && document.querySelector('table.standings')) {
     predict(contestId)
-      .then(() => console.info('[Carrot] Predict success'))
-      .catch(er => console.error('[Carrot] Predict error: %o', er));
+      .then(columns => {
+        console.info('[Carrot] Predict success');
+        state.columns = columns;
+      })
+      .catch(er => {
+        console.error('[Carrot] Predict error: %o', er);
+        state.error = er;
+      });
   }
 
   // On any Codeforces page.
@@ -374,7 +389,7 @@ main();
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.type === 'LIST_COLS') {
-    return Promise.resolve(columns);
+    return Promise.resolve(state);
   } else if (message.type == 'UPDATE_COLS') {
     updateColumnVisibility(message.prefs);
     return Promise.resolve();
