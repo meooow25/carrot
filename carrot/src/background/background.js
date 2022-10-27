@@ -20,7 +20,7 @@ const RATINGS = new Ratings(api, LOCAL);
 const CONTESTS_COMPLETE = new ContestsComplete(api);
 const TOP_LEVEL_CACHE = new TopLevelCache();
 
-browser.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message, sender) => {
   let responsePromise;
   if (message.type === 'PREDICT') {
     console.info('Received message: %o', message);
@@ -28,6 +28,10 @@ browser.runtime.onMessage.addListener((message) => {
   } else if (message.type === 'PING') {
     console.info('Received message: %o', message);
     responsePromise = Promise.all([maybeUpdateContestList(), maybeUpdateRatings()]);
+  } else if (message.type === 'SET_ERROR_BADGE') {
+    console.info('Received message: %o', message);
+    setErrorBadge(sender);
+    responsePromise = Promise.resolve();
   } else {
     return;
   }
@@ -178,6 +182,17 @@ async function maybeUpdateRatings() {
 }
 
 // Cache related code ends.
+
+// Badge related code starts.
+
+function setErrorBadge(sender) {
+  const tabId = sender.tab.id;
+  browser.browserAction.setBadgeText({ text: '!', tabId });
+  browser.browserAction.setBadgeTextColor({ color: 'white', tabId });
+  browser.browserAction.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
+}
+
+// Badge related code ends.
 
 browser.runtime.onInstalled.addListener((details) => {
   if (details.previousVersion && compareVersions(details.previousVersion, '0.6.2') <= 0) {

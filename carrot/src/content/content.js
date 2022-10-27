@@ -373,6 +373,7 @@ function main() {
       .catch(er => {
         console.error('[Carrot] Predict error: %o', er);
         state.error = er;
+        browser.runtime.sendMessage({ type: 'SET_ERROR_BADGE' });
       });
   }
 
