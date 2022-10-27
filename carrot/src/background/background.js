@@ -188,7 +188,9 @@ async function maybeUpdateRatings() {
 function setErrorBadge(sender) {
   const tabId = sender.tab.id;
   browser.browserAction.setBadgeText({ text: '!', tabId });
-  browser.browserAction.setBadgeTextColor({ color: 'white', tabId });
+  if (browser.browserAction.setBadgeTextColor) {  // Only works in Firefox
+    browser.browserAction.setBadgeTextColor({ color: 'white', tabId });
+  }
   browser.browserAction.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
 }
 

@@ -55,7 +55,7 @@ function trimString(s, n) {
 }
 
 function showError(err) {
-  const errTrimmed = trimString(err.toString(), ERROR_STR_MAX_LEN);
+  const errTrimmed = trimString(err, ERROR_STR_MAX_LEN);
   const errorTextDiv = document.querySelector('#error-text');
   errorTextDiv.textContent = errTrimmed;
 

@@ -354,7 +354,7 @@ async function predict(contestId) {
 
 // Mutable state, set once.
 // If predict succeeds, columns will be set to either PREDICT_COLUMNS or FINAL_COLUMNS.
-// If it fails, error will be set to the received error.
+// If it fails, error will be set to the received error .toString().
 const state = {
   columns: null,
   error: null,
@@ -372,7 +372,7 @@ function main() {
       })
       .catch(er => {
         console.error('[Carrot] Predict error: %o', er);
-        state.error = er;
+        state.error = er.toString();
         browser.runtime.sendMessage({ type: 'SET_ERROR_BADGE' });
       });
   }
