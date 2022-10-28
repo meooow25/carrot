@@ -377,10 +377,7 @@ function main() {
   }
 
   // On any Codeforces page.
-  const ping = () => {
-    browser.runtime.sendMessage({ type: 'PING' })
-      .catch(er => console.error('[Carrot] Background page ping error: %o', er));
-  };
+  const ping = () => { browser.runtime.sendMessage({ type: 'PING' }); };
   ping();
   setInterval(ping, PING_INTERVAL);
 }
