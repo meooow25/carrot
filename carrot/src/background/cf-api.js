@@ -5,18 +5,27 @@
 const API_URL_PREFIX = 'https://codeforces.com/api/';
 
 async function apiFetch(path, queryParams) {
-  let url = new URL(API_URL_PREFIX + path);
+  const url = new URL(API_URL_PREFIX + path);
   for (const [key, value] of Object.entries(queryParams)) {
     if (value !== undefined) {
       url.searchParams.append(key, value);
     }
   }
   const resp = await fetch(url);
-  const json = await resp.json();
-  if (json.status === 'OK') {
-    return json.result;
+  const text = await resp.text();
+  if (resp.status !== 200) {
+    throw new Error(`CF API: HTTP error ${resp.status}: ${text}`)
   }
-  throw new Error(json.comment);
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (_) {
+    throw new Error(`CF API: Invalid JSON: ${text}`);
+  }
+  if (json.status !== 'OK' || json.result === undefined) {
+    throw new Error(`CF API: Error: ${text}`);
+  }
+  return json.result;
 }
 
 export const contest = {
