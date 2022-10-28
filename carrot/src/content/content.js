@@ -367,7 +367,6 @@ function main() {
   if (contestId && document.querySelector('table.standings')) {
     predict(contestId)
       .then(columns => {
-        console.info('[Carrot] Predict success');
         state.columns = columns;
       })
       .catch(er => {
