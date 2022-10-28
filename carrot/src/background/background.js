@@ -6,7 +6,6 @@ import Ratings from './cache/ratings.js';
 import TopLevelCache from './cache/top-level-cache.js';
 import predict, { Contestant, PredictResult } from './predict.js';
 import PredictResponse from './predict-response.js';
-import UserPrefs from '../util/user-prefs.js';
 import * as api from './cf-api.js';
 import compareVersions from '../util/version-compare.js';
 
@@ -61,7 +60,7 @@ function checkRatedByTeam(rows) {
 }
 
 async function getDeltas(contestId) {
-  const prefs = await UserPrefs.create(settings);
+  const prefs = await settings.getPrefs();
   if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
     const deltasPromise = calcDeltas(contestId, prefs);
     TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
@@ -71,7 +70,9 @@ async function getDeltas(contestId) {
 }
 
 async function calcDeltas(contestId, prefs) {
-  prefs.checkAnyDeltasEnabled();
+  if (!prefs.enablePredictDeltas && !prefs.enableFinalDeltas) {
+    throw new Error('DISABLED');
+  }
 
   if (CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.getCached(contestId);
@@ -86,14 +87,18 @@ async function calcDeltas(contestId, prefs) {
   }
 
   if (!DEBUG_FORCE_PREDICT && contest.isRated === Contest.IsRated.YES) {
-    prefs.checkFinalDeltasEnabled();
+    if (!prefs.enableFinalDeltas) {
+      throw new Error('DISABLED');
+    }
     return getFinal(contest);
   }
 
   // Now contest.isRated = LIKELY
   checkRatedByName(contest.contest.name);
   checkRatedByTeam(contest.rows);
-  prefs.checkPredictDeltasEnabled();
+  if (!prefs.enablePredictDeltas) {
+    throw new Error('DISABLED');
+  }
   return await getPredicted(contest);
 }
 
@@ -148,7 +153,7 @@ async function getPredicted(contest) {
 // Cache related code starts.
 
 async function maybeUpdateContestList() {
-  const prefs = await UserPrefs.create(settings);
+  const prefs = await settings.getPrefs();
   if (!prefs.enablePredictDeltas && !prefs.enableFinalDeltas) {
     return;
   }
@@ -171,7 +176,7 @@ function getNearestUpcomingRatedContestStartTime() {
 }
 
 async function maybeUpdateRatings() {
-  const prefs = await UserPrefs.create(settings);
+  const prefs = await settings.getPrefs();
   if (!prefs.enablePredictDeltas || !prefs.enablePrefetchRatings) {
     return;
   }

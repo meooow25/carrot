@@ -1,5 +1,4 @@
 import * as settings from '../util/settings.js';
-import UserPrefs from '../util/user-prefs.js';
 
 const Unicode = {
   HORIZONTAL_ELLIPSIS: '\u2026',
@@ -36,7 +35,7 @@ async function makeList(cols, changeCallback) {
 }
 
 async function informAllTabs() {
-  const prefs = await UserPrefs.create(settings);
+  const prefs = await settings.getPrefs();
   for (const tab of await browser.tabs.query({})) {
     browser.tabs.sendMessage(tab.id, {
       type: 'UPDATE_COLS',

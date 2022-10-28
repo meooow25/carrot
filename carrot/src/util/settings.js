@@ -22,3 +22,17 @@ export const showColRankUpDelta = boolSetterGetter('settings.showColRankUpDelta'
 export const showColFinalPerformance = boolSetterGetter('settings.showColFinalPerformance', true);
 export const showColFinalDelta = boolSetterGetter('settings.showColFinalDelta', true);
 export const showColRankChange = boolSetterGetter('settings.showColRankChange', true);
+
+export async function getPrefs() {
+  return {
+    enablePredictDeltas: await enablePredictDeltas(),
+    enableFinalDeltas: await enableFinalDeltas(),
+    enablePrefetchRatings: await enablePrefetchRatings(),
+    showColCurrentPerformance: await showColCurrentPerformance(),
+    showColPredictedDelta: await showColPredictedDelta(),
+    showColRankUpDelta: await showColRankUpDelta(),
+    showColFinalPerformance: await showColFinalPerformance(),
+    showColFinalDelta: await showColFinalDelta(),
+    showColRankChange: await showColRankChange(),
+  }
+}
