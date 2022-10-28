@@ -90,9 +90,10 @@ async function setup() {
   }
   if (tabColumns.columns) {
     await makeList(tabColumns.columns, informAllTabs);
-  }
-  if (tabColumns.error) {
+  } else if (tabColumns.error) {
     showError(tabColumns.error);
+  } else {
+    // Unreachable
   }
 }
 
