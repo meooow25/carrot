@@ -45,7 +45,7 @@ async function informAllTabs() {
   }
 }
 
-const ERROR_STR_MAX_LEN = 100;
+const ERROR_STR_MAX_LEN = 120;
 
 function trimString(s, n) {
   if (s.length <= n) {
