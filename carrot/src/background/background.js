@@ -47,16 +47,8 @@ function isUnratedByName(contestName) {
   return UNRATED_HINTS.some((hint) => lower.includes(hint));
 }
 
-function checkRatedByName(contestName) {
-  if (isUnratedByName(contestName)) {
-    throw new Error('UNRATED_CONTEST');
-  }
-}
-
-function checkRatedByTeam(rows) {
-  if (rows.some((row) => row.party.teamId != null || row.party.teamName != null)) {
-    throw new Error('UNRATED_CONTEST');
-  }
+function anyRowHasTeam(rows) {
+  return rows.some((row) => row.party.teamId != null || row.party.teamName != null)
 }
 
 async function getDeltas(contestId) {
@@ -76,7 +68,9 @@ async function calcDeltas(contestId, prefs) {
 
   if (CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.getCached(contestId);
-    checkRatedByName(contest.name);
+    if (isUnratedByName(contest.name)) {
+      throw new Error('UNRATED_CONTEST');
+    }
   }
 
   const contest = await CONTESTS_COMPLETE.fetch(contestId);
@@ -94,8 +88,12 @@ async function calcDeltas(contestId, prefs) {
   }
 
   // Now contest.isRated = LIKELY
-  checkRatedByName(contest.contest.name);
-  checkRatedByTeam(contest.rows);
+  if (isUnratedByName(contest.contest.name)) {
+    throw new Error('UNRATED_CONTEST');
+  }
+  if (anyRowHasTeam(contest.rows)) {
+    throw new Error('UNRATED_CONTEST');
+  }
   if (!prefs.enablePredictDeltas) {
     throw new Error('DISABLED');
   }
