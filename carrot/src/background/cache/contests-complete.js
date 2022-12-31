@@ -29,9 +29,9 @@ function isOldContest(contest) {
 
 function isMagicOn() {
   let now = new Date();
-  // Magic typically lasts 1 Jan to 10 Jan, but let's put some buffer and assume it happens from
-  // 30 Dec to 11 Jan.
-  return now.getMonth() === 11 && now.getDate() >= 30
+  // Assume Codeforces Magic lasts from 24 Dec to 11 Jan.
+  // https://codeforces.com/blog/entry/110477
+  return now.getMonth() === 11 && now.getDate() >= 24
       || now.getMonth() === 0 && now.getDate() <= 11;
 }
 
