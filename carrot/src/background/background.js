@@ -53,11 +53,7 @@ function anyRowHasTeam(rows) {
 
 async function getDeltas(contestId) {
   const prefs = await settings.getPrefs();
-  if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
-    const deltasPromise = calcDeltas(contestId, prefs);
-    TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
-  }
-  return TOP_LEVEL_CACHE.getCached(contestId);
+  return TOP_LEVEL_CACHE.getOr(contestId, () => calcDeltas(contestId, prefs));
 }
 
 async function calcDeltas(contestId, prefs) {
