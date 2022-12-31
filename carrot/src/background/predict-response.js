@@ -43,7 +43,7 @@ export default class PredictResponse {
           newRank = Rank.forRating(result.effectiveRating + result.delta);
           break;
         default:
-          throw new Error('Unknown prediction type: ' + this.type);
+          throw new Error('Unknown prediction type'); // Unexpected
       }
       const performance = {
         value: result.performance === Infinity ? 'Infinity' : result.performance,

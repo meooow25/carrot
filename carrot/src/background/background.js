@@ -6,7 +6,6 @@ import Ratings from './cache/ratings.js';
 import TopLevelCache from './cache/top-level-cache.js';
 import predict, { Contestant, PredictResult } from './predict.js';
 import PredictResponse from './predict-response.js';
-import UserPrefs from '../util/user-prefs.js';
 import * as api from './cf-api.js';
 import compareVersions from '../util/version-compare.js';
 
@@ -48,53 +47,60 @@ function isUnratedByName(contestName) {
   return UNRATED_HINTS.some((hint) => lower.includes(hint));
 }
 
-function checkRatedByName(contestName) {
-  if (isUnratedByName(contestName)) {
-    throw new Error('UNRATED_CONTEST');
-  }
-}
-
-function checkRatedByTeam(rows) {
-  if (rows.some((row) => row.party.teamId != null || row.party.teamName != null)) {
-    throw new Error('UNRATED_CONTEST');
-  }
+function anyRowHasTeam(rows) {
+  return rows.some((row) => row.party.teamId != null || row.party.teamName != null)
 }
 
 async function getDeltas(contestId) {
-  const prefs = await UserPrefs.create(settings);
-  if (!TOP_LEVEL_CACHE.hasCached(contestId)) {
-    const deltasPromise = calcDeltas(contestId, prefs);
-    TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
-  }
-  const predictResponse = await TOP_LEVEL_CACHE.getCached(contestId);
-  return { predictResponse, prefs };
+  const prefs = await settings.getPrefs();
+  return TOP_LEVEL_CACHE.getOr(contestId, () => calcDeltas(contestId, prefs));
 }
 
 async function calcDeltas(contestId, prefs) {
-  prefs.checkAnyDeltasEnabled();
+  if (!prefs.enablePredictDeltas && !prefs.enableFinalDeltas) {
+    return { result: 'DISABLED' };
+  }
 
   if (CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.getCached(contestId);
-    checkRatedByName(contest.name);
+    if (isUnratedByName(contest.name)) {
+      return { result: 'UNRATED_CONTEST' };
+    }
   }
 
   const contest = await CONTESTS_COMPLETE.fetch(contestId);
   CONTESTS.update(contest.contest);
 
   if (contest.isRated === Contest.IsRated.NO) {
-    throw new Error('UNRATED_CONTEST');
+    return { result: 'UNRATED_CONTEST' };
   }
 
   if (!DEBUG_FORCE_PREDICT && contest.isRated === Contest.IsRated.YES) {
-    prefs.checkFinalDeltasEnabled();
-    return getFinal(contest);
+    if (!prefs.enableFinalDeltas) {
+      return { result: 'DISABLED' };
+    }
+    return {
+      result: 'OK',
+      prefs,
+      predictResponse: getFinal(contest),
+    };
   }
 
   // Now contest.isRated = LIKELY
-  checkRatedByName(contest.contest.name);
-  checkRatedByTeam(contest.rows);
-  prefs.checkPredictDeltasEnabled();
-  return await getPredicted(contest);
+  if (isUnratedByName(contest.contest.name)) {
+    return { result: 'UNRATED_CONTEST' };
+  }
+  if (anyRowHasTeam(contest.rows)) {
+    return { result: 'UNRATED_CONTEST' };
+  }
+  if (!prefs.enablePredictDeltas) {
+    return { result: 'DISABLED' };
+  }
+  return {
+    result: 'OK',
+    prefs,
+    predictResponse: await getPredicted(contest),
+  };
 }
 
 function predictForRows(rows, ratingBeforeContest) {
@@ -148,7 +154,7 @@ async function getPredicted(contest) {
 // Cache related code starts.
 
 async function maybeUpdateContestList() {
-  const prefs = await UserPrefs.create(settings);
+  const prefs = await settings.getPrefs();
   if (!prefs.enablePredictDeltas && !prefs.enableFinalDeltas) {
     return;
   }
@@ -171,7 +177,7 @@ function getNearestUpcomingRatedContestStartTime() {
 }
 
 async function maybeUpdateRatings() {
-  const prefs = await UserPrefs.create(settings);
+  const prefs = await settings.getPrefs();
   if (!prefs.enablePredictDeltas || !prefs.enablePrefetchRatings) {
     return;
   }

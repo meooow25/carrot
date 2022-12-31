@@ -1,7 +1,6 @@
 import Lock from '../../util/lock.js';
 
-const REFRESH_INTERVAL_ON_OK = 60 * 60 * 1000;  // 1 hour
-const REFRESH_INTERVAL_ON_ERR = 20 * 60 * 1000;  // 20 minutes
+const REFRESH_INTERVAL = 6 * 60 * 60 * 1000;  // 6 hours
 
 /**
  * In-memory cache of contest infos.
@@ -11,26 +10,22 @@ export default class Contests {
     this.api = api;
     this.contestMap = new Map();
     this.lock = new Lock();
-    this.lastFetchTime = 0;
-    this.lastFetchOk = false;
+    this.lastAttemptTime = 0;
   }
 
   async maybeRefreshCache() {
     const inner = async () => {
       const now = Date.now();
-      const minInterval = this.lastFetchOk ? REFRESH_INTERVAL_ON_OK : REFRESH_INTERVAL_ON_ERR;
-      const refresh = now - this.lastFetchTime > minInterval;
+      const refresh = now - this.lastAttemptTime > REFRESH_INTERVAL;
       if (!refresh) {
         return;
       }
-      this.lastFetchTime = now;
+      this.lastAttemptTime = now;
       try {
         const contests = await this.api.contest.list();
         this.contestMap = new Map(contests.map((c) => [c.id, c]));
-        this.lastFetchOk = true;
       } catch (er) {
         console.warn('Unable to fetch contest list: ' + er);
-        this.lastFetchOk = false;
       }
     };
 

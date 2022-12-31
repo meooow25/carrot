@@ -223,7 +223,7 @@ function populateCells(row, type, rankUpTint, perfCell, deltaCell, rankUpCell) {
       }
       break;
     default:
-      throw new Error('Unknown prediction type: ' + type);
+      throw new Error('Unknown prediction type'); // Unexpected
   }
 }
 
@@ -243,7 +243,7 @@ function updateStandings(resp) {
       columns = PREDICT_COLUMNS;
       break;
     default:
-      throw new Error('Unknown prediction type: ' + resp.type);
+      throw new Error('Unknown prediction type'); // Unexpected
   }
 
   const rows = Array.from(document.querySelectorAll('table.standings tbody tr'));
@@ -320,35 +320,33 @@ function showTimer(fetchTime) {
 }
 
 async function predict(contestId) {
-  let data;
-  try {
-    data = await browser.runtime.sendMessage({ type: 'PREDICT', contestId: contestId });
-  } catch (er) {
-    switch (er.message) {
-      case 'UNRATED_CONTEST':
-        console.info('[Carrot] Unrated contest, not displaying delta column.');
-        break;
-      case 'DISABLED':
-        console.info('[Carrot] Deltas for this contest are disabled according to user settings.');
-        break;
-      default:
-        throw er;
-    }
-    return;
+  const response = await browser.runtime.sendMessage({ type: 'PREDICT', contestId });
+  switch (response.result) {
+    case 'OK':
+      // Continue below
+      break;
+    case 'UNRATED_CONTEST':
+      console.info('[Carrot] Unrated contest, not displaying delta column.');
+      return;
+    case 'DISABLED':
+      console.info('[Carrot] Deltas for this contest are disabled according to user settings.');
+      return;
+    default:
+      throw new Error('Unknown result'); // Unexpected
   }
 
-  const columns = updateStandings(data.predictResponse);
-  switch (data.predictResponse.type) {
+  const columns = updateStandings(response.predictResponse);
+  switch (response.predictResponse.type) {
     case 'FINAL':
       showFinal();
       break;
     case 'PREDICTED':
-      showTimer(data.predictResponse.fetchTime);
+      showTimer(response.predictResponse.fetchTime);
       break;
     default:
-      throw new Error('Unknown prediction type: ' + data.predictResponse.type);
+      throw new Error('Unknown prediction type'); // Unexpected
   }
-  updateColumnVisibility(data.prefs);
+  updateColumnVisibility(response.prefs);
   return columns;
 }
 
