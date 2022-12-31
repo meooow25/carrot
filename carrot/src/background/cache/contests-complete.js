@@ -6,7 +6,7 @@ export class Contest {
     this.contest = contest;
     this.problems = problems;
     this.rows = rows;
-    this.ratingChanges = ratingChanges;
+    this.ratingChanges = ratingChanges; // undefined if isRated is not YES
     this.fetchTime = fetchTime;
     this.isRated = isRated;
     this.performances = null;  // To be populated by someone who calculates the performances.
@@ -60,8 +60,12 @@ export class ContestsComplete {
     if (contest.phase === 'FINISHED') {
       try {
         ratingChanges = await this.api.contest.ratingChanges(contestId);
-        if (ratingChanges && ratingChanges.length > 0) {
-          isRated = Contest.IsRated.YES;
+        if (ratingChanges) {
+          if (ratingChanges.length > 0) {
+            isRated = Contest.IsRated.YES;
+          } else {
+            ratingChanges = undefined; // Reset to undefined if it was an empty array
+          }
         }
       } catch (er) {
         if (er.message.includes('Rating changes are unavailable for this contest')) {
