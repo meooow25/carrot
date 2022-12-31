@@ -57,19 +57,18 @@ async function getDeltas(contestId) {
     const deltasPromise = calcDeltas(contestId, prefs);
     TOP_LEVEL_CACHE.cache(contestId, deltasPromise);
   }
-  const predictResponse = await TOP_LEVEL_CACHE.getCached(contestId);
-  return { predictResponse, prefs };
+  return TOP_LEVEL_CACHE.getCached(contestId);
 }
 
 async function calcDeltas(contestId, prefs) {
   if (!prefs.enablePredictDeltas && !prefs.enableFinalDeltas) {
-    throw new Error('DISABLED');
+    return { result: 'DISABLED' };
   }
 
   if (CONTESTS.hasCached(contestId)) {
     const contest = CONTESTS.getCached(contestId);
     if (isUnratedByName(contest.name)) {
-      throw new Error('UNRATED_CONTEST');
+      return { result: 'UNRATED_CONTEST' };
     }
   }
 
@@ -77,27 +76,35 @@ async function calcDeltas(contestId, prefs) {
   CONTESTS.update(contest.contest);
 
   if (contest.isRated === Contest.IsRated.NO) {
-    throw new Error('UNRATED_CONTEST');
+    return { result: 'UNRATED_CONTEST' };
   }
 
   if (!DEBUG_FORCE_PREDICT && contest.isRated === Contest.IsRated.YES) {
     if (!prefs.enableFinalDeltas) {
-      throw new Error('DISABLED');
+      return { result: 'DISABLED' };
     }
-    return getFinal(contest);
+    return {
+      result: 'OK',
+      prefs,
+      predictResponse: getFinal(contest),
+    };
   }
 
   // Now contest.isRated = LIKELY
   if (isUnratedByName(contest.contest.name)) {
-    throw new Error('UNRATED_CONTEST');
+    return { result: 'UNRATED_CONTEST' };
   }
   if (anyRowHasTeam(contest.rows)) {
-    throw new Error('UNRATED_CONTEST');
+    return { result: 'UNRATED_CONTEST' };
   }
   if (!prefs.enablePredictDeltas) {
-    throw new Error('DISABLED');
+    return { result: 'DISABLED' };
   }
-  return await getPredicted(contest);
+  return {
+    result: 'OK',
+    prefs,
+    predictResponse: await getPredicted(contest),
+  };
 }
 
 function predictForRows(rows, ratingBeforeContest) {
