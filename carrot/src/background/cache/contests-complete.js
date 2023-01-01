@@ -19,6 +19,7 @@ Contest.IsRated = {
   LIKELY: 'LIKELY',
 };
 
+const MAGIC_CACHE_DURATION = 5 * 60 * 1000; // 5 mins
 const RATING_PENDING_MAX_DAYS = 3;
 
 function isOldContest(contest) {
@@ -82,14 +83,21 @@ export class ContestsComplete {
 
     // If the contest is finished, the contest data doesn't change so cache it.
     // The exception is during new year's magic, when people change handles and handles on the
-    // ranklist can become outdated.
+    // ranklist can become outdated. So cache it only for a small duration.
     // TODO: New users can also change handles upto a week(?) after joining. Is this a big enough
     // issue to stop caching completely?
-    if (isFinished && !isMagicOn()) {
+    if (isFinished) {
       this.contests.set(contestId, c);
       this.contestIds.push(contestId);
       if (this.contestIds.length > MAX_FINISHED_CONTESTS_TO_CACHE) {
         this.contests.delete(this.contestIds.shift());
+      }
+      if (isMagicOn()) {
+        setTimeout(() => {
+          this.contests.delete(contestId);
+          this.contestIds = this.contestIds.filter((cid) => cid !== contestId);
+        },
+        MAGIC_CACHE_DURATION);
       }
     }
 
