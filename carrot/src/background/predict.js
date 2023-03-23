@@ -14,7 +14,7 @@ import binarySearch from '../util/binsearch.js'
  */
 
 const PRINT_PERFORMANCE = false;
-const DEFAULT_RATING = 1400;
+const DEFAULT_RATING = 0;
 
 export class Contestant {
   constructor(handle, points, penalty, rating) {
