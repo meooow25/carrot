@@ -22,7 +22,13 @@ export class Contestant {
     this.points = points;
     this.penalty = penalty;
     this.rating = rating;
+
     this.effectiveRating = rating == null || rating == 0 ? DEFAULT_RATING : rating;
+    // Note: The rating == 0 check is a band-aid for CF's fake ratings (see Github #18).
+    // If CF tells us that a user has rating 0, we consider that the user is in fact unrated.
+    // This unfortunately means that a user who truly has rating 0 will be considered to have
+    // DEFAULT_RATING, but such cases are unlikely compared to the regular presence of unrated
+    // users.
 
     this.rank = null;
     this.delta = null;
