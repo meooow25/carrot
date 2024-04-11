@@ -114,7 +114,8 @@ function predictForRows(rows, ratingBeforeContest) {
 function getFinal(contest) {
   // Calculate and save the performances on the contest object if not already saved.
   if (contest.performances === null) {
-    const ratingBeforeContest = new Map(contest.ratingChanges.map((c) => [c.handle, c.oldRating]));
+    const ratingBeforeContest = new Map(
+      contest.ratingChanges.map((c) => [c.handle, contest.oldRatings.get(c.handle)]));
     const rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
       return ratingBeforeContest.has(handle);

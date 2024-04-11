@@ -2,11 +2,12 @@
  * Wrapper for all useful contest data.
  */
 export class Contest {
-  constructor(contest, problems, rows, ratingChanges, fetchTime, isRated) {
+  constructor(contest, problems, rows, ratingChanges, oldRatings, fetchTime, isRated) {
     this.contest = contest;
     this.problems = problems;
     this.rows = rows;
     this.ratingChanges = ratingChanges; // undefined if isRated is not YES
+    this.oldRatings = oldRatings; // undefined if isRated is not YES
     this.fetchTime = fetchTime;
     this.isRated = isRated;
     this.performances = null;  // To be populated by someone who calculates the performances.
@@ -57,6 +58,7 @@ export class ContestsComplete {
 
     const { contest, problems, rows } = await this.api.contest.standings(contestId);
     let ratingChanges;
+    let oldRatings;
     let isRated = Contest.IsRated.LIKELY;
     if (contest.phase === 'FINISHED') {
       try {
@@ -64,6 +66,7 @@ export class ContestsComplete {
         if (ratingChanges) {
           if (ratingChanges.length > 0) {
             isRated = Contest.IsRated.YES;
+            oldRatings = adjustOldRatings(contestId, ratingChanges);
           } else {
             ratingChanges = undefined; // Reset to undefined if it was an empty array
           }
@@ -79,7 +82,7 @@ export class ContestsComplete {
     }
     const isFinished = isRated === Contest.IsRated.NO || isRated === Contest.IsRated.YES;
 
-    const c = new Contest(contest, problems, rows, ratingChanges, Date.now(), isRated);
+    const c = new Contest(contest, problems, rows, ratingChanges, oldRatings, Date.now(), isRated);
 
     // If the contest is finished, the contest data doesn't change so cache it.
     // The exception is during new year's magic, when people change handles and handles on the
@@ -103,4 +106,26 @@ export class ContestsComplete {
 
     return c;
   }
+}
+
+const FAKE_RATINGS_SINCE_CONTEST = 1360;
+const NEW_DEFAULT_RATING = 1400;
+
+function adjustOldRatings(contestId, ratingChanges) {
+  const oldRatings = new Map();
+  if (contestId < FAKE_RATINGS_SINCE_CONTEST) {
+    for (const change of ratingChanges) {
+      oldRatings.set(change.handle, change.oldRating);
+    }
+  } else {
+    for (const change of ratingChanges) {
+      oldRatings.set(change.handle, change.oldRating == 0 ? NEW_DEFAULT_RATING : change.oldRating);
+    }
+    // Note: This a band-aid for CF's fake ratings (see Github #18).
+    // If CF tells us that a user had rating 0, we consider that the user is in fact unrated.
+    // This unfortunately means that a user who truly has rating 0 will be considered to have
+    // DEFAULT_RATING, but such cases are unlikely compared to the regular presence of unrated
+    // users.
+  }
+  return oldRatings;
 }
