@@ -23,6 +23,7 @@ export class Contestant {
     this.penalty = penalty;
     this.rating = rating;
     this.effectiveRating = rating == null ? DEFAULT_RATING : rating;
+
     this.rank = null;
     this.delta = null;
     this.performance = null;
