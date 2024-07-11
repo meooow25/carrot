@@ -2,7 +2,7 @@
  * Utility to fetch data from the Codeforces API.
  */
 
-const API_URL_PREFIX = 'https://codeforces.com/api/';
+const API_URL_PREFIX = 'https://mirror.codeforces.com/api/';
 
 async function apiFetch(path, queryParams) {
   const url = new URL(API_URL_PREFIX + path);
