@@ -10,7 +10,8 @@
   },
   "permissions": [
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "*://*.codeforces.com/*"
   ],
   "background": {
     "page": "src/background/background.html",

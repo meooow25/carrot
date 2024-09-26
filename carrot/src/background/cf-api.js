@@ -1,58 +1,46 @@
 /**
  * Utility to fetch data from the Codeforces API.
  */
+export class Api {
+  constructor(fetchFromContentScript) {
+    // We fetch from the content script as a workaround for CF putting API
+    // endpoints behind a Cloudflare human check. The content script should
+    // have the necessary cookies to get through and receive a response.
+    this.fetchFromContentScript = fetchFromContentScript;
+  }
 
-const API_URL_PREFIX = 'https://codeforces.com/api/';
-
-async function apiFetch(path, queryParams) {
-  const url = new URL(API_URL_PREFIX + path);
-  for (const [key, value] of Object.entries(queryParams)) {
-    if (value !== undefined) {
-      url.searchParams.append(key, value);
+  async fetch(path, queryParams) {
+    let queryParamList = [];
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined) {
+        queryParamList.push([key, value]);
+      }
     }
+    return await this.fetchFromContentScript(path, queryParamList);
   }
-  const resp = await fetch(url);
-  const text = await resp.text();
-  if (resp.status !== 200) {
-    throw new Error(`CF API: HTTP error ${resp.status}: ${text}`)
-  }
-  let json;
-  try {
-    json = JSON.parse(text);
-  } catch (_) {
-    throw new Error(`CF API: Invalid JSON: ${text}`);
-  }
-  if (json.status !== 'OK' || json.result === undefined) {
-    throw new Error(`CF API: Error: ${text}`);
-  }
-  return json.result;
-}
 
-export const contest = {
-  async list(gym = undefined) {
-    return await apiFetch('contest.list', { gym: gym });
-  },
+  async contestList(gym = undefined) {
+    return await this.fetch('contest.list', { gym });
+  }
 
-  async standings(
+  async contestStandings(
     contestId, from = undefined, count = undefined, handles = undefined, room = undefined,
     showUnofficial = undefined) {
-    return await apiFetch('contest.standings', {
-      contestId: contestId,
-      from: from,
-      count: count,
+    return await this.fetch('contest.standings', {
+      contestId,
+      from,
+      count,
       handles: handles && handles.length ? handles.join(';') : undefined,
-      room: room,
-      showUnofficial: showUnofficial,
+      room,
+      showUnofficial,
     });
-  },
+  }
 
-  async ratingChanges(contestId) {
-    return await apiFetch('contest.ratingChanges', { contestId: contestId });
-  },
-};
+  async contestRatingChanges(contestId) {
+    return await this.fetch('contest.ratingChanges', { contestId });
+  }
 
-export const user = {
-  async ratedList(activeOnly = undefined) {
-    return await apiFetch('user.ratedList', { activeOnly: activeOnly });
-  },
-};
+  async userRatedList(activeOnly = undefined) {
+    return await this.fetch('user.ratedList', { activeOnly });
+  }
+}

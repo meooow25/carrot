@@ -6,7 +6,7 @@ import Ratings from './cache/ratings.js';
 import TopLevelCache from './cache/top-level-cache.js';
 import predict, { Contestant, PredictResult } from './predict.js';
 import PredictResponse from './predict-response.js';
-import * as api from './cf-api.js';
+import { Api } from './cf-api.js';
 import compareVersions from '../util/version-compare.js';
 
 const DEBUG_FORCE_PREDICT = false;
@@ -14,10 +14,15 @@ const DEBUG_FORCE_PREDICT = false;
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'teams'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
 
-const CONTESTS = new Contests(api);
-const RATINGS = new Ratings(api, LOCAL);
-const CONTESTS_COMPLETE = new ContestsComplete(api);
+const API = new Api(fetchFromContentScript);
+const CONTESTS = new Contests(API);
+const RATINGS = new Ratings(API, LOCAL);
+const CONTESTS_COMPLETE = new ContestsComplete(API);
 const TOP_LEVEL_CACHE = new TopLevelCache();
+
+/* ----------------------------------------------- */
+/*   Message listener                              */
+/* ----------------------------------------------- */
 
 browser.runtime.onMessage.addListener((message, sender) => {
   let responsePromise;
@@ -40,7 +45,37 @@ browser.runtime.onMessage.addListener((message, sender) => {
   });
 });
 
-// Prediction related code starts.
+/* ----------------------------------------------- */
+/*   Content script fetch                          */
+/* ----------------------------------------------- */
+
+async function fetchFromContentScript(path, queryParamList) {
+  const tabs = await browser.tabs.query({
+    // This is the same as host permissions in the manifest
+    url: ['*://*.codeforces.com/*'],
+  });
+
+  if (tabs.length === 0) {
+    throw new Error('No Codeforces tab open :<');
+  }
+
+  // Prefer a loaded tab
+  let tab = tabs.find(tab => tab.status === 'complete');
+  if (tab === undefined) {
+    tab = tabs[0];
+  }
+
+  const msg = {
+    type: 'API_FETCH',
+    path,
+    queryParamList,
+  };
+  return await browser.tabs.sendMessage(tab.id, msg);
+}
+
+/* ----------------------------------------------- */
+/*   Prediction                                    */
+/* ----------------------------------------------- */
 
 function isUnratedByName(contestName) {
   const lower = contestName.toLowerCase();
@@ -150,9 +185,9 @@ async function getPredicted(contest) {
   return new PredictResponse(predictResults, PredictResponse.TYPE_PREDICTED, contest.fetchTime);
 }
 
-// Prediction related code ends.
-
-// Cache related code starts.
+/* ----------------------------------------------- */
+/*   Cache stuff                                   */
+/* ----------------------------------------------- */
 
 async function maybeUpdateContestList() {
   const prefs = await settings.getPrefs();
@@ -188,9 +223,9 @@ async function maybeUpdateRatings() {
   }
 }
 
-// Cache related code ends.
-
-// Badge related code starts.
+/* ----------------------------------------------- */
+/*   Badge stuff                                   */
+/* ----------------------------------------------- */
 
 function setErrorBadge(sender) {
   const tabId = sender.tab.id;
@@ -201,7 +236,9 @@ function setErrorBadge(sender) {
   browser.browserAction.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
 }
 
-// Badge related code ends.
+/* ----------------------------------------------- */
+/*   Bug fixes                                     */
+/* ----------------------------------------------- */
 
 browser.runtime.onInstalled.addListener((details) => {
   if (details.previousVersion && compareVersions(details.previousVersion, '0.6.2') <= 0) {
