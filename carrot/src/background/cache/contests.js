@@ -22,7 +22,7 @@ export default class Contests {
       }
       this.lastAttemptTime = now;
       try {
-        const contests = await this.api.contest.list();
+        const contests = await this.api.contestList();
         this.contestMap = new Map(contests.map((c) => [c.id, c]));
       } catch (er) {
         console.warn('Unable to fetch contest list: ' + er);

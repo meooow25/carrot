@@ -1,10 +1,11 @@
 import * as path from 'https://deno.land/std@0.76.0/path/mod.ts';
 
 import { Contestant } from '../src/background/predict.js';
-import * as api from '../src/background/cf-api.js';
+import { Api } from '../src/background/cf-api.js';
 
 const DATA_DIR = path.join(path.fromFileUrl(import.meta.url), '../data');
 const DATA_FILE_REGEX = /^(round-.*)-data.json$/;
+const API_URL_PREFIX = 'https://codeforces.com/api/'
 
 export class DataRow {
   constructor(
@@ -54,10 +55,28 @@ async function main() {
     Deno.exit(1);
   }
 
-  const { rows } = await api.contest.standings(contestId);
+  const api = new Api(
+    async (path: string, queryParamList: [string, string][]): Promise<any> => {
+      const url = new URL(API_URL_PREFIX + path);
+      for (const [key, value] of queryParamList) {
+        url.searchParams.append(key, value);
+      }
+      const resp = await fetch(url);
+      if (resp.status !== 200) {
+        throw new Error(`CF API: HTTP error ${resp.status}`)
+      }
+      const json = await resp.json();
+      if (json.status !== 'OK') {
+        throw new Error(`CF API: Error: ${json.status}`);
+      }
+      return json.result;
+    }
+  );
+
+  const { rows } = await api.contestStandings(contestId);
   const rowMap = new Map<string, any>(rows.map((r: any) => [r.party.members[0].handle, r]));
 
-  const changes = await api.contest.ratingChanges(contestId);
+  const changes = await api.contestRatingChanges(contestId);
 
   const output = changes.map((c: any) => {
     const row = rowMap.get(c.handle);

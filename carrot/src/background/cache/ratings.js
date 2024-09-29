@@ -49,7 +49,7 @@ export default class Ratings {
   }
 
   async cacheRatings() {
-    const users = await this.api.user.ratedList(false);
+    const users = await this.api.userRatedList(false);
     const ratings = Object.fromEntries(users.map((u) => [u.handle, u.rating]));
     await this.storage.set(RATINGS, ratings);
     await this.storage.set(RATINGS_TIMESTAMP, Date.now());

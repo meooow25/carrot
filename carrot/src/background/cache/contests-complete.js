@@ -56,13 +56,13 @@ export class ContestsComplete {
       return this.contests.get(contestId);
     }
 
-    const { contest, problems, rows } = await this.api.contest.standings(contestId);
+    const { contest, problems, rows } = await this.api.contestStandings(contestId);
     let ratingChanges;
     let oldRatings;
     let isRated = Contest.IsRated.LIKELY;
     if (contest.phase === 'FINISHED') {
       try {
-        ratingChanges = await this.api.contest.ratingChanges(contestId);
+        ratingChanges = await this.api.contestRatingChanges(contestId);
         if (ratingChanges) {
           if (ratingChanges.length > 0) {
             isRated = Contest.IsRated.YES;

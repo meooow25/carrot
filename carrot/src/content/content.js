@@ -358,6 +358,38 @@ const state = {
   error: null,
 };
 
+/* ----------------------------------------------- */
+/*   API stuff                                     */
+/* ----------------------------------------------- */
+
+const API_PATH = '/api/';
+
+async function apiFetch(path, queryParamList) {
+  const url = new URL(location.origin + API_PATH + path);
+  for (const [key, value] of queryParamList) {
+    url.searchParams.append(key, value);
+  }
+  const resp = await fetch(url);
+  const text = await resp.text();
+  if (resp.status !== 200) {
+    throw new Error(`CF API: HTTP error ${resp.status}: ${text}`)
+  }
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (_) {
+    throw new Error(`CF API: Invalid JSON: ${text}`);
+  }
+  if (json.status !== 'OK' || json.result === undefined) {
+    throw new Error(`CF API: Error: ${text}`);
+  }
+  return json.result;
+}
+
+/* ----------------------------------------------- */
+/*   main                                          */
+/* ----------------------------------------------- */
+
 function main() {
   // On any Codeforces ranklist page.
   const matches = location.pathname.match(/contest\/(\d+)\/standings/);
@@ -388,5 +420,7 @@ browser.runtime.onMessage.addListener((message) => {
   } else if (message.type == 'UPDATE_COLS') {
     updateColumnVisibility(message.prefs);
     return Promise.resolve();
+  } else if (message.type = 'API_FETCH') {
+    return apiFetch(message.path, message.queryParamList);
   }
 });
