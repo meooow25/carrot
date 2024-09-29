@@ -1,7 +1,7 @@
 /**
  * Encapsulates a Codeforces rank.
  */
-export default class Rank {
+export class Rank {
   constructor(name, abbr, low, high, colorClass) {
     this.name = name;
     this.abbr = abbr;
@@ -34,5 +34,6 @@ Rank.RATED = [
   new Rank('International Master', 'IM', 2300, 2400, 'user-orange'),
   new Rank('Grandmaster', 'GM', 2400, 2600, 'user-red'),
   new Rank('International Grandmaster', 'IGM', 2600, 3000, 'user-red'),
-  new Rank('Legendary Grandmaster', 'LGM', 3000, Infinity, 'user-legendary'),
+  new Rank('Legendary Grandmaster', 'LGM', 3000, 4000, 'user-legendary'),
+  new Rank('Tourist', 'T', 4000, Infinity, 'user-4000'),
 ];

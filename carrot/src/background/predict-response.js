@@ -1,4 +1,4 @@
-import Rank from './rank.js';
+import { Rank } from './rank.js';
 
 class PredictResponseRow {
   constructor(delta, rank, performance, newRank, deltaReqForRankUp, nextRank) {
