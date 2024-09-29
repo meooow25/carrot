@@ -5,6 +5,7 @@ import { Api } from '../src/background/cf-api.js';
 
 const DATA_DIR = path.join(path.fromFileUrl(import.meta.url), '../data');
 const DATA_FILE_REGEX = /^(round-.*)-data.json$/;
+const API_URL_PREFIX = 'https://codeforces.com/api/'
 
 export class DataRow {
   constructor(
@@ -54,21 +55,23 @@ async function main() {
     Deno.exit(1);
   }
 
-  const api = new Api((path, queryParamList) => {
-    const url = new URL(location.origin + API_PATH + path);
-    for (const [key, value] of queryParamList) {
-      url.searchParams.append(key, value);
+  const api = new Api(
+    async (path: string, queryParamList: [string, string][]): Promise<any> => {
+      const url = new URL(API_URL_PREFIX + path);
+      for (const [key, value] of queryParamList) {
+        url.searchParams.append(key, value);
+      }
+      const resp = await fetch(url);
+      if (resp.status !== 200) {
+        throw new Error(`CF API: HTTP error ${resp.status}`)
+      }
+      const json = await resp.json();
+      if (json.status !== 'OK') {
+        throw new Error(`CF API: Error: ${json.status}`);
+      }
+      return json.result;
     }
-    const resp = await fetch(url);
-    if (resp.status !== 200) {
-      throw new Error(`CF API: HTTP error ${resp.status}`)
-    }
-    const json = await resp.json();
-    if (json.status !== 'OK') {
-      throw new Error(`CF API: Error: ${json.status}`);
-    }
-    return json.result;
-  });
+  );
 
   const { rows } = await api.contestStandings(contestId);
   const rowMap = new Map<string, any>(rows.map((r: any) => [r.party.members[0].handle, r]));
