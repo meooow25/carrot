@@ -8,6 +8,7 @@ import predict, { Contestant, PredictResult } from './predict.js';
 import PredictResponse from './predict-response.js';
 import { Api } from './cf-api.js';
 import compareVersions from '../util/version-compare.js';
+import '../../polyfill/browser-polyfill.min.js'
 
 const DEBUG_FORCE_PREDICT = false;
 

@@ -110,14 +110,12 @@ pack_chrome() {
 
   # Set png icons in the manifest.
   jq_manifest_replace ".icons = ${icons_json} |
-      .browser_action.default_icon = \"icons/icon${icon_sizes[-1]}.png\"" manifest.json
+      .action.default_icon = \"icons/icon${icon_sizes[2]}.png\"" manifest.json
 
   # Final touches to manifest.json.
   jq_manifest_replace 'del(.browser_specific_settings) |
-      if .options_ui.browser_style
-        then .options_ui.chrome_style = .options_ui.browser_style else . end |
       del (.options_ui.browser_style) |
-      del (.browser_action.browser_style)' manifest.json
+      del (.action.browser_style)' manifest.json
 
   if [[ -n "${release_dir}" ]]; then
     # Prepare the zip.

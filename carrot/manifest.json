@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Carrot",
   "version": "0.6.7",
   "description": "Rating predictor for Codeforces",
@@ -10,12 +10,14 @@
   },
   "permissions": [
     "storage",
-    "unlimitedStorage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
     "*://*.codeforces.com/*"
   ],
   "background": {
-    "page": "src/background/background.html",
-    "persistent": true
+    "service_worker": "src/background/background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -28,8 +30,7 @@
     "page": "src/options/options.html",
     "browser_style": true
   },
-  "browser_action": {
-    "browser_style": true,
+  "action": {
     "default_icon": "icons/icon.svg",
     "default_title": "Carrot",
     "default_popup": "src/popup/popup.html"
