@@ -20,29 +20,73 @@ const RATINGS = new Ratings(API, LOCAL);
 const CONTESTS_COMPLETE = new ContestsComplete(API);
 const TOP_LEVEL_CACHE = new TopLevelCache();
 
+const KEEP_ALIVE_INTERVAL = 20000; // 20 seconds
+
+let ports = new Set();
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'carrot-connection') {
+    ports.add(port);
+    port.onDisconnect.addListener(() => {
+      ports.delete(port);
+    });
+    
+    // Send initial response to confirm connection
+    port.postMessage({ type: 'CONNECTED' });
+  }
+});
+
+function keepAlive() {
+  for (const port of ports) {
+    try {
+      port.postMessage({ type: 'PING' });
+    } catch (e) {
+      console.warn('[Carrot] Failed to ping port:', e);
+      ports.delete(port);
+    }
+  }
+}
+
+setInterval(keepAlive, KEEP_ALIVE_INTERVAL);
+
 /* ----------------------------------------------- */
 /*   Message listener                              */
 /* ----------------------------------------------- */
 
-browser.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.info('Received message: %o', message);
+  
+  if (message.type === 'CHECK_CONNECTION') {
+    sendResponse({ connected: true });
+    return true;
+  }
+  
   let responsePromise;
   if (message.type === 'PREDICT') {
-    console.info('Received message: %o', message);
-    responsePromise = getDeltas(message.contestId);
+    responsePromise = getDeltas(message.contestId)
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch((e) => {
+        console.error(e);
+        sendResponse({ error: e.message });
+      });
+    return true;
   } else if (message.type === 'PING') {
-    console.info('Received message: %o', message);
-    responsePromise = Promise.all([maybeUpdateContestList(), maybeUpdateRatings()]);
+    responsePromise = Promise.all([maybeUpdateContestList(), maybeUpdateRatings()])
+      .then(() => {
+        sendResponse({ result: 'OK' });
+      })
+      .catch((e) => {
+        sendResponse({ error: e.message });
+      });
+    return true;
   } else if (message.type === 'SET_ERROR_BADGE') {
-    console.info('Received message: %o', message);
     setErrorBadge(sender);
-    responsePromise = Promise.resolve();
-  } else {
-    return;
+    sendResponse({ result: 'OK' });
+    return true;
   }
-  return responsePromise.catch((e) => {
-    console.error(e);
-    throw e;
-  });
+  return false;
 });
 
 /* ----------------------------------------------- */
@@ -50,7 +94,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
 /* ----------------------------------------------- */
 
 async function fetchFromContentScript(path, queryParamList) {
-  const tabs = await browser.tabs.query({
+  const tabs = await chrome.tabs.query({
     // This is the same as host permissions in the manifest
     url: ['*://*.codeforces.com/*'],
   });
@@ -70,7 +114,7 @@ async function fetchFromContentScript(path, queryParamList) {
     path,
     queryParamList,
   };
-  return await browser.tabs.sendMessage(tab.id, msg);
+  return await chrome.tabs.sendMessage(tab.id, msg);
 }
 
 /* ----------------------------------------------- */
@@ -229,21 +273,19 @@ async function maybeUpdateRatings() {
 
 function setErrorBadge(sender) {
   const tabId = sender.tab.id;
-  browser.browserAction.setBadgeText({ text: '!', tabId });
-  if (browser.browserAction.setBadgeTextColor) {  // Only works in Firefox
-    browser.browserAction.setBadgeTextColor({ color: 'white', tabId });
-  }
-  browser.browserAction.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
+  chrome.action.setBadgeText({ text: '!', tabId });
+  chrome.action.setBadgeTextColor({ color: 'white', tabId });
+  chrome.action.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
 }
 
 /* ----------------------------------------------- */
 /*   Bug fixes                                     */
 /* ----------------------------------------------- */
 
-browser.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener((details) => {
   if (details.previousVersion && compareVersions(details.previousVersion, '0.6.2') <= 0) {
     // Clear cache to remove stale timestamp
     // https://github.com/meooow25/carrot/issues/31
-    browser.storage.local.clear();
+    chrome.storage.local.clear();
   }
 });

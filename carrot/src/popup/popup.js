@@ -36,8 +36,8 @@ async function makeList(cols, changeCallback) {
 
 async function informAllTabs() {
   const prefs = await settings.getPrefs();
-  for (const tab of await browser.tabs.query({})) {
-    browser.tabs.sendMessage(tab.id, {
+  for (const tab of await chrome.tabs.query({})) {
+    chrome.tabs.sendMessage(tab.id, {
       type: 'UPDATE_COLS',
       prefs,
     }).catch(() => { /* No listener on this tab */ });
@@ -63,26 +63,26 @@ function showError(err) {
 }
 
 async function setup() {
-  const manifest = browser.runtime.getManifest();
+  const manifest = chrome.runtime.getManifest();
 
   document.querySelector('#version').textContent = 'v' + manifest.version;
   document.querySelector('#title').textContent = manifest.name;
   document.querySelector('#icon').src =
-    browser.runtime.getURL(manifest.browser_action.default_icon);
+    chrome.runtime.getURL(manifest.action.default_icon);
 
   const settings = document.querySelector('#settings');
   settings.addEventListener('click', () => {
-    browser.runtime.openOptionsPage();
+    chrome.runtime.openOptionsPage();
     window.close();
   });
 
-  const [tab] = await browser.tabs.query({
+  const [tab] = await chrome.tabs.query({
     active: true,
     currentWindow: true,
   });
   let tabColumns;
   try {
-    tabColumns = await browser.tabs.sendMessage(tab.id, { type: 'LIST_COLS' });
+    tabColumns = await chrome.tabs.sendMessage(tab.id, { type: 'LIST_COLS' });
   } catch (_) {
     // No listener on the tab
     return;
