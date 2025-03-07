@@ -45,9 +45,6 @@ pack_firefox() {
   copy_carrot "${copy_dir}"
   cd "${copy_dir}/carrot"
 
-  # Remove browser_specific_settings from manifest.
-  jq_manifest_replace 'del(.browser_specific_settings)' manifest.json
-
   # Prepare the zip.
   rm -f "../../${release_dir}/${firefox_zip}"
   zip -q -r "../../${release_dir}/${firefox_zip}" .
@@ -75,7 +72,7 @@ pack_chrome() {
   cd "${copy_dir}"
 
   # Download the polyfill.
-  local polyfill_url='https://unpkg.com/webextension-polyfill@0.6.0/dist/browser-polyfill.min.js'
+  local polyfill_url='https://unpkg.com/webextension-polyfill@0.12.0/dist/browser-polyfill.min.js'
   local polyfill_download_path='downloads/browser-polyfill.min.js'
   local polyfill_path='polyfill/browser-polyfill.min.js'
   mkdir -p downloads
@@ -95,8 +92,18 @@ pack_chrome() {
     sed -i -r "0,/<script/ s/((\s+)<script)/\2${polyfill_script}\n\1/" "${html_file}"
   done
 
+  # Inline the polyfill in background.js.
+  # The polyfill doesn't support being imported as an ES6 module, and the worker can't use
+  # importScripts in module mode. So I do the dumbest thing possible and inline the polyfill.
+  # This works well enough, and I'm getting too tired of this pointless MV3 busywork to care.
+  sed -i -e "/INLINE_POLYFILL_ON_CHROME_MARKER_START/r ${polyfill_path}" src/background/background.js
+
   # Add the polyfill as content script.
   jq_manifest_replace ".content_scripts[].js |= [\"${polyfill_path}\"] + ." manifest.json
+
+  # Change the background script to service_worker
+  jq_manifest_replace '.background.service_worker = .background.scripts[0] |
+      del(.background.scripts)' manifest.json
 
   # Prepare png icons from svg.
   icon_sizes=(16 32 48 128)
@@ -110,14 +117,10 @@ pack_chrome() {
 
   # Set png icons in the manifest.
   jq_manifest_replace ".icons = ${icons_json} |
-      .browser_action.default_icon = \"icons/icon${icon_sizes[-1]}.png\"" manifest.json
+      .action.default_icon = \"icons/icon${icon_sizes[-1]}.png\"" manifest.json
 
   # Final touches to manifest.json.
-  jq_manifest_replace 'del(.browser_specific_settings) |
-      if .options_ui.browser_style
-        then .options_ui.chrome_style = .options_ui.browser_style else . end |
-      del (.options_ui.browser_style) |
-      del (.browser_action.browser_style)' manifest.json
+  jq_manifest_replace 'del(.browser_specific_settings)' manifest.json
 
   if [[ -n "${release_dir}" ]]; then
     # Prepare the zip.

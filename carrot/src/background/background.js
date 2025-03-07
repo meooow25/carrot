@@ -9,15 +9,18 @@ import PredictResponse from './predict-response.js';
 import { Api } from './cf-api.js';
 import compareVersions from '../util/version-compare.js';
 
+// INLINE_POLYFILL_ON_CHROME_MARKER_START
+// INLINE_POLYFILL_ON_CHROME_MARKER_END
+
 const DEBUG_FORCE_PREDICT = false;
 
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'teams'];
 const EDU_ROUND_RATED_THRESHOLD = 2100;
 
 const API = new Api(fetchFromContentScript);
-const CONTESTS = new Contests(API);
+const CONTESTS = new Contests(API, LOCAL);
 const RATINGS = new Ratings(API, LOCAL);
-const CONTESTS_COMPLETE = new ContestsComplete(API);
+const CONTESTS_COMPLETE = new ContestsComplete(API, LOCAL);
 const TOP_LEVEL_CACHE = new TopLevelCache();
 
 /* ----------------------------------------------- */
@@ -96,15 +99,13 @@ async function calcDeltas(contestId, prefs) {
     return { result: 'DISABLED' };
   }
 
-  if (CONTESTS.hasCached(contestId)) {
-    const contest = CONTESTS.getCached(contestId);
-    if (isUnratedByName(contest.name)) {
-      return { result: 'UNRATED_CONTEST' };
-    }
+  const contestBasic = await CONTESTS.getCached(contestId);
+  if (contestBasic !== undefined && isUnratedByName(contestBasic.name)) {
+    return { result: 'UNRATED_CONTEST' };
   }
 
   const contest = await CONTESTS_COMPLETE.fetch(contestId);
-  CONTESTS.update(contest.contest);
+  await CONTESTS.update(contest.contest);
 
   if (contest.isRated === Contest.IsRated.NO) {
     return { result: 'UNRATED_CONTEST' };
@@ -150,7 +151,7 @@ function getFinal(contest) {
   // Calculate and save the performances on the contest object if not already saved.
   if (contest.performances === null) {
     const ratingBeforeContest = new Map(
-      contest.ratingChanges.map((c) => [c.handle, contest.oldRatings.get(c.handle)]));
+      contest.ratingChanges.map((c) => [c.handle, contest.oldRatings[c.handle]]));
     const rows = contest.rows.filter((row) => {
       const handle = row.party.members[0].handle;
       return ratingBeforeContest.has(handle);
@@ -197,10 +198,11 @@ async function maybeUpdateContestList() {
   await CONTESTS.maybeRefreshCache();
 }
 
-function getNearestUpcomingRatedContestStartTime() {
+async function getNearestUpcomingRatedContestStartTime() {
   let nearest = null;
   const now = Date.now();
-  for (const c of CONTESTS.list()) {
+  const contests = await CONTESTS.list();
+  for (const c of contests) {
     const start = (c.startTimeSeconds || 0) * 1000;
     if (start < now || isUnratedByName(c.name)) {
       continue;
@@ -217,7 +219,7 @@ async function maybeUpdateRatings() {
   if (!prefs.enablePredictDeltas || !prefs.enablePrefetchRatings) {
     return;
   }
-  const startTimeMs = getNearestUpcomingRatedContestStartTime();
+  const startTimeMs = await getNearestUpcomingRatedContestStartTime();
   if (startTimeMs !== null) {
     await RATINGS.maybeRefreshCache(startTimeMs);
   }
@@ -229,11 +231,11 @@ async function maybeUpdateRatings() {
 
 function setErrorBadge(sender) {
   const tabId = sender.tab.id;
-  browser.browserAction.setBadgeText({ text: '!', tabId });
-  if (browser.browserAction.setBadgeTextColor) {  // Only works in Firefox
-    browser.browserAction.setBadgeTextColor({ color: 'white', tabId });
+  browser.action.setBadgeText({ text: '!', tabId });
+  if (browser.action.setBadgeTextColor) {  // Only works in Firefox
+    browser.action.setBadgeTextColor({ color: 'white', tabId });
   }
-  browser.browserAction.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
+  browser.action.setBadgeBackgroundColor({ color: 'hsl(355, 100%, 30%)', tabId });
 }
 
 /* ----------------------------------------------- */
