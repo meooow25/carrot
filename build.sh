@@ -92,11 +92,8 @@ pack_chrome() {
     sed -i -r "0,/<script/ s/((\s+)<script)/\2${polyfill_script}\n\1/" "${html_file}"
   done
 
-  # Inline the polyfill in background.js.
-  # The polyfill doesn't support being imported as an ES6 module, and the worker can't use
-  # importScripts in module mode. So I do the dumbest thing possible and inline the polyfill.
-  # This works well enough, and I'm getting too tired of this pointless MV3 busywork to care.
-  sed -i -e "/INLINE_POLYFILL_ON_CHROME_MARKER_START/r ${polyfill_path}" src/background/background.js
+  # Import the polyfill in background.js.
+  sed -i -e "1iimport '../../${polyfill_path}';" src/background/background.js
 
   # Add the polyfill as content script.
   jq_manifest_replace ".content_scripts[].js |= [\"${polyfill_path}\"] + ." manifest.json
