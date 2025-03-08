@@ -80,6 +80,8 @@ export class ContestsComplete {
       } catch (er) {
         if (er.message.includes('Rating changes are unavailable for this contest')) {
           isRated = Contest.IsRated.NO;
+        } else {
+          throw er;
         }
       }
     }
