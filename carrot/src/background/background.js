@@ -9,9 +9,6 @@ import PredictResponse from './predict-response.js';
 import { Api } from './cf-api.js';
 import compareVersions from '../util/version-compare.js';
 
-// INLINE_POLYFILL_ON_CHROME_MARKER_START
-// INLINE_POLYFILL_ON_CHROME_MARKER_END
-
 const DEBUG_FORCE_PREDICT = false;
 
 const UNRATED_HINTS = ['unrated', 'fools', 'q#', 'kotlin', 'marathon', 'teams'];
