@@ -1,6 +1,8 @@
 body {
   min-width: 500px;
   min-height: 180px;
+  font-family: sans-serif;
+  font-size: 13px;
 }
 
 ul {

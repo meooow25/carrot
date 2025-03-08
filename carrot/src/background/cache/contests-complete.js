@@ -21,6 +21,7 @@ Contest.IsRated = {
 };
 
 const MAGIC_CACHE_DURATION = 5 * 60 * 1000; // 5 mins
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 1 day; this should never change when magic is off tbh
 const RATING_PENDING_MAX_DAYS = 3;
 
 function isOldContest(contest) {
@@ -29,37 +30,42 @@ function isOldContest(contest) {
   return daysSinceContestEnd > RATING_PENDING_MAX_DAYS;
 }
 
-function isMagicOn() {
+function valid(fetchTime) {
   let now = new Date();
   // Assume Codeforces Magic lasts from 24 Dec to 11 Jan.
   // https://codeforces.com/blog/entry/110477
-  return now.getMonth() === 11 && now.getDate() >= 24
+  const isMagic =
+         now.getMonth() === 11 && now.getDate() >= 24
       || now.getMonth() === 0 && now.getDate() <= 11;
+
+  const duration = isMagic ? MAGIC_CACHE_DURATION : CACHE_DURATION;
+  return now.getTime() < fetchTime + duration;
 }
 
 const MAX_FINISHED_CONTESTS_TO_CACHE = 15;
+const CONTESTS_COMPLETE_KEY = 'cache.contests_complete';
 
 /**
- * Fetches complete contest information from the API. Caches finished contests in memory.
+ * Fetches complete contest information from the API. Caches finished contests.
  */
 export class ContestsComplete {
-  constructor(api) {
+  constructor(api, storage) {
     this.api = api;
-
-    // Cache of finished contests
-    this.contests = new Map();
-    this.contestIds = [];
+    this.storage = storage;
   }
 
   async fetch(contestId) {
-    if (this.contests.has(contestId)) {
-      return this.contests.get(contestId);
+    const [contestMap, contestMapIds] = await this.storage.get(CONTESTS_COMPLETE_KEY, [{}, []]);
+    const cachedContest = contestMap[contestId];
+    if (cachedContest !== undefined && valid(cachedContest.fetchTime)) {
+      return cachedContest;
     }
 
     const { contest, problems, rows } = await this.api.contestStandings(contestId);
     let ratingChanges;
     let oldRatings;
     let isRated = Contest.IsRated.LIKELY;
+    const fetchTime = Date.now();
     if (contest.phase === 'FINISHED') {
       try {
         ratingChanges = await this.api.contestRatingChanges(contestId);
@@ -82,7 +88,7 @@ export class ContestsComplete {
     }
     const isFinished = isRated === Contest.IsRated.NO || isRated === Contest.IsRated.YES;
 
-    const c = new Contest(contest, problems, rows, ratingChanges, oldRatings, Date.now(), isRated);
+    const c = new Contest(contest, problems, rows, ratingChanges, oldRatings, fetchTime, isRated);
 
     // If the contest is finished, the contest data doesn't change so cache it.
     // The exception is during new year's magic, when people change handles and handles on the
@@ -90,18 +96,13 @@ export class ContestsComplete {
     // TODO: New users can also change handles upto a week(?) after joining. Is this a big enough
     // issue to stop caching completely?
     if (isFinished) {
-      this.contests.set(contestId, c);
-      this.contestIds.push(contestId);
-      if (this.contestIds.length > MAX_FINISHED_CONTESTS_TO_CACHE) {
-        this.contests.delete(this.contestIds.shift());
+      contestMap[contestId] = c;
+      contestMapIds.push(contestId);
+      if (contestMapIds.length > MAX_FINISHED_CONTESTS_TO_CACHE) {
+        const oldestId = contestMapIds.shift();
+        delete contestMap[oldestId];
       }
-      if (isMagicOn()) {
-        setTimeout(() => {
-          this.contests.delete(contestId);
-          this.contestIds = this.contestIds.filter((cid) => cid !== contestId);
-        },
-        MAGIC_CACHE_DURATION);
-      }
+      await this.storage.set(CONTESTS_COMPLETE_KEY, [contestMap, contestMapIds]);
     }
 
     return c;
@@ -112,14 +113,14 @@ const FAKE_RATINGS_SINCE_CONTEST = 1360;
 const NEW_DEFAULT_RATING = 1400;
 
 function adjustOldRatings(contestId, ratingChanges) {
-  const oldRatings = new Map();
+  const oldRatings = {};
   if (contestId < FAKE_RATINGS_SINCE_CONTEST) {
     for (const change of ratingChanges) {
-      oldRatings.set(change.handle, change.oldRating);
+      oldRatings[change.handle] = change.oldRating;
     }
   } else {
     for (const change of ratingChanges) {
-      oldRatings.set(change.handle, change.oldRating == 0 ? NEW_DEFAULT_RATING : change.oldRating);
+      oldRatings[change.handle] = change.oldRating == 0 ? NEW_DEFAULT_RATING : change.oldRating;
     }
     // Note: This a band-aid for CF's fake ratings (see Github #18).
     // If CF tells us that a user had rating 0, we consider that the user is in fact unrated.
